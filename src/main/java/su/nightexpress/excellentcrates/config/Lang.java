@@ -119,6 +119,10 @@ public class Lang implements LangContainer {
 
 
 
+    public static final MessageLocale CRATE_OPEN_ERROR_KEY_CONFIGURATION = LangEntry.builder("Crate.Open.Error.KeyConfiguration").chatMessage(
+        SOFT_RED.wrap("This crate is temporarily unavailable. Please contact an administrator.")
+    );
+
     public static final MessageLocale CRATE_OPEN_ERROR_INVENTORY_SPACE = LangEntry.builder("Crate.Open.Error.InventorySpace").titleMessage(
         SOFT_RED.wrap(BOLD.wrap("Inventory is Full!")),
         GRAY.wrap("Clean up inventory to open crates."),

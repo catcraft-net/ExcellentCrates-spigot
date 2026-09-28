@@ -20,6 +20,7 @@ import su.nightexpress.excellentcrates.opening.OpeningManager;
 import su.nightexpress.excellentcrates.opening.ProviderRegistry;
 import su.nightexpress.excellentcrates.registry.CratesRegistries;
 import su.nightexpress.excellentcrates.user.UserManager;
+import su.nightexpress.excellentcrates.util.ItemDataUpgrade;
 import su.nightexpress.nightcore.NightPlugin;
 import su.nightexpress.nightcore.commands.command.NightCommand;
 import su.nightexpress.nightcore.config.PluginDetails;
@@ -74,6 +75,7 @@ public class CratesPlugin extends NightPlugin {
 
     @Override
     public void enable() {
+        ItemDataUpgrade.run(this);
         this.crateLogger = new CrateLogger(this);
         this.dialogRegistry = new DialogRegistry(this);
 

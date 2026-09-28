@@ -1,6 +1,7 @@
 package su.nightexpress.excellentcrates.crate.cost;
 
 import org.bukkit.entity.Player;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import su.nightexpress.excellentcrates.Placeholders;
@@ -17,6 +18,8 @@ import su.nightexpress.nightcore.util.problem.ProblemReporter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.LinkedHashMap;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
@@ -25,6 +28,7 @@ public class Cost implements Writeable {
 
     private final String          id;
     private final List<CostEntry> entries;
+    private final List<Map<String, Object>> unreadableEntries = new ArrayList<>();
 
     private boolean enabled;
     private String name;
@@ -45,17 +49,28 @@ public class Cost implements Writeable {
         AdaptedItem icon = ItemHelper.readOrPlaceholder(config, path + ".Icon");
 
         List<CostEntry> entries = new ArrayList<>();
+        List<Map<String, Object>> unreadable = new ArrayList<>();
         config.getSection(path + ".Entries").forEach(sId -> {
             try {
                 CostEntry entry = AbstractCostEntry.read(config, path + ".Entries." + sId);
                 entries.add(entry);
             }
             catch (IllegalStateException exception) {
+                // Preserve failed entries across saves; dropping one must not reduce an opening's price.
+                Map<String, Object> values = new LinkedHashMap<>();
+                ConfigurationSection section = config.getConfigurationSection(path + ".Entries." + sId);
+                if (section != null) section.getValues(true).forEach((key, value) -> {
+                    if (!(value instanceof ConfigurationSection)) values.put(key, value);
+                });
+                if (values.isEmpty()) values.put("Type", "unreadable");
+                unreadable.add(values);
                 exception.printStackTrace();
             }
         });
 
-        return new Cost(id, enabled, name, icon, entries);
+        Cost cost = new Cost(id, enabled, name, icon, entries);
+        cost.unreadableEntries.addAll(unreadable);
+        return cost;
     }
 
     @Override
@@ -67,11 +82,16 @@ public class Cost implements Writeable {
         for (int i = 0; i < this.entries.size(); i++) {
             config.set(path + ".Entries." + i, this.entries.get(i));
         }
+        for (int i = 0; i < this.unreadableEntries.size(); i++) {
+            String entryPath = path + ".Entries." + (this.entries.size() + i);
+            this.unreadableEntries.get(i).forEach((key, value) -> config.set(entryPath + "." + key, value));
+        }
     }
 
     @NotNull
     public ProblemReporter collectProblems() {
         ProblemReporter reporter = new ProblemCollector("Cost Option '" + this.id + "'", this.id);
+        if (!this.unreadableEntries.isEmpty()) reporter.report("Unreadable cost entries: repair the cost configuration and reload.");
 
         this.getEntries().forEach(entry -> {
             if (!entry.isValid()) {
@@ -126,7 +146,7 @@ public class Cost implements Writeable {
     }
 
     public boolean hasInvalids() {
-        return this.entries.stream().anyMatch(Predicate.not(CostEntry::isValid));
+        return !this.unreadableEntries.isEmpty() || this.entries.stream().anyMatch(Predicate.not(CostEntry::isValid));
     }
 
     public void addEntry(@NotNull CostEntry entry) {

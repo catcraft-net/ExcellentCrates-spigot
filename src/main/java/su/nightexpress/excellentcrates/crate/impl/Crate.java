@@ -16,6 +16,7 @@ import su.nightexpress.excellentcrates.config.Keys;
 import su.nightexpress.excellentcrates.config.Lang;
 import su.nightexpress.excellentcrates.config.Perms;
 import su.nightexpress.excellentcrates.crate.cost.Cost;
+import su.nightexpress.excellentcrates.crate.cost.KeyRequirement;
 import su.nightexpress.excellentcrates.crate.cost.CostTypeId;
 import su.nightexpress.excellentcrates.crate.cost.entry.impl.EcoCostEntry;
 import su.nightexpress.excellentcrates.crate.cost.entry.impl.KeyCostEntry;
@@ -337,6 +338,9 @@ public class Crate implements ConfigBacked {
         ProblemCollector collector = new ProblemCollector(this.getName(), this.filePath.toString());
 
         if (!this.item.isValid()) collector.report(Lang.INSPECTIONS_GENERIC_ITEM.get(false));
+        if (Config.OPENING_REQUIRE_KEY.get() && this.getFirstCost().isEmpty()) {
+            collector.report("Openings blocked: no enabled, valid key cost (Crate.Opening.RequireKey).");
+        }
         if (this.isPreviewEnabled() && !this.isPreviewValid()) collector.report(Lang.INSPECTIONS_CRATE_PREVIEW.get(false));
         if (this.isOpeningEnabled() && !this.isOpeningValid()) collector.report(Lang.INSPECTIONS_CRATE_OPENING.get(false));
         if (this.isHologramEnabled() && !this.isHologramTemplateValid()) collector.report(Lang.INSPECTIONS_CRATE_HOLOGRAM.get(false));
@@ -538,7 +542,7 @@ public class Crate implements ConfigBacked {
     }
 
     public int countMaxOpenings(@NotNull Player player) {
-        return this.getCosts().stream().filter(Cost::isEnabled).mapToInt(cost -> cost.countMaxOpenings(player)).max().orElse(-1);
+        return this.getCosts().stream().filter(this::isOpeningCostAvailable).mapToInt(cost -> cost.countMaxOpenings(player)).max().orElse(-1);
     }
 
     public void markDirty() {
@@ -719,20 +723,25 @@ public class Crate implements ConfigBacked {
 
     @NotNull
     public Optional<Cost> getFirstCost() {
-        return this.getCosts().stream().filter(Cost::isAvailable).findFirst();
+        return this.getCosts().stream().filter(this::isOpeningCostAvailable).findFirst();
     }
 
     @NotNull
     public Optional<Cost> getAnyCost(@NotNull Player player) {
-        return this.getCosts().stream().filter(cost -> cost.isAvailable() && cost.canAfford(player)).findAny().or(this::getFirstCost);
+        return this.getCosts().stream().filter(cost -> this.isOpeningCostAvailable(cost) && cost.canAfford(player)
+            && (!Config.OPENING_REQUIRE_KEY.get() || KeyRequirement.hasEnoughKeys(player, cost))).findAny().or(this::getFirstCost);
+    }
+
+    public boolean isOpeningCostAvailable(@NotNull Cost cost) {
+        return cost.isAvailable() && (!Config.OPENING_REQUIRE_KEY.get() || KeyRequirement.isValidCost(this, cost));
     }
 
     public boolean hasCost() {
-        return !this.costMap.isEmpty() && this.getCosts().stream().anyMatch(Cost::isAvailable);
+        return this.getCosts().stream().anyMatch(this::isOpeningCostAvailable);
     }
 
     public boolean hasMultipleCosts() {
-        return this.getCosts().stream().filter(Cost::isAvailable).count() >= 2;
+        return this.getCosts().stream().filter(this::isOpeningCostAvailable).count() >= 2;
     }
 
     public boolean isPushbackEnabled() {

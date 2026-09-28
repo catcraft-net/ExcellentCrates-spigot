@@ -55,7 +55,7 @@ public class OpeningCostMenu extends LinkedMenu<CratesPlugin, CrateSource> imple
         CrateSource source = this.getLink(player);
         Crate crate = source.getCrate();
 
-        List<Cost> costs = crate.getCosts().stream().filter(Cost::isAvailable).toList();
+        List<Cost> costs = crate.getCosts().stream().filter(crate::isOpeningCostAvailable).toList();
         int costCount = costs.size();
         int[] costSlots = this.slotsByCostsAmount.getOrDefault(costCount, new int[0]);
 

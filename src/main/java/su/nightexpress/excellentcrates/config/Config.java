@@ -176,6 +176,13 @@ public class Config {
         "Available values: [" + Enums.inline(TimeFormatType.class) + "]"
     );
 
+    public static final ConfigValue<Boolean> OPENING_REQUIRE_KEY = ConfigValue.create("Crate.Opening.RequireKey",
+        true,
+        "Require a valid, enabled key cost for every opening, including commands and bulk openings.",
+        "Missing, broken, disabled and keyless costs are blocked. Force commands cannot bypass this.",
+        "Physical and virtual keys are supported. Disable only to deliberately allow keyless openings."
+    );
+
     public static final ConfigValue<Boolean> OPENING_CONFIRM_FOR_SINGLE_COST = ConfigValue.create("Crate.Opening.Confirmation.ForSingleCost",
         false,
         "Controls whether the Costs GUI will appear even if there is only cost option available."

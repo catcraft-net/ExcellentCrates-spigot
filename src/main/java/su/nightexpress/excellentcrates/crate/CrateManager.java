@@ -20,6 +20,8 @@ import su.nightexpress.excellentcrates.config.Config;
 import su.nightexpress.excellentcrates.config.Keys;
 import su.nightexpress.excellentcrates.config.Lang;
 import su.nightexpress.excellentcrates.crate.cost.Cost;
+import su.nightexpress.excellentcrates.crate.cost.KeyRequirement;
+import su.nightexpress.excellentcrates.crate.cost.entry.impl.KeyCostEntry;
 import su.nightexpress.excellentcrates.crate.cost.CostDialogs;
 import su.nightexpress.excellentcrates.crate.effect.CrateEffect;
 import su.nightexpress.excellentcrates.crate.effect.EffectId;
@@ -71,6 +73,7 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
     private final Map<WorldPos, Crate>     crateByPosMap;
     private final Map<String, PreviewMenu> previewByIdMap;
     private final Map<UUID, Long>          previewCooldown;
+    private final Set<String> warnedKeyConfigurations = new HashSet<>();
 
     private OpeningCostMenu   costMenu;
     private OpeningAmountMenu amountMenu;
@@ -106,6 +109,7 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
 
     @Override
     protected void onShutdown() {
+        this.warnedKeyConfigurations.clear();
         this.saveCrates();
 
         if (this.milestonesMenu != null) this.milestonesMenu.clear();
@@ -484,6 +488,10 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
         }
 
         if (!crate.hasCost()) {
+            if (Config.OPENING_REQUIRE_KEY.get()) {
+                this.rejectKeyConfiguration(player, source);
+                return;
+            }
             if (Config.MASS_OPENING_ALLOW_FOR_NO_COST.get()) {
                 if (Config.MASS_OPENING_SNEAK_TO_USE.get() && player.isSneaking()) {
                     this.multiOpenCrate(player, source, OpenOptions.empty(), null, Config.MASS_OPENING_LIMIT.get());
@@ -556,9 +564,13 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
 
     public boolean openCrate(@NotNull Player player, @NotNull CrateSource source, @NotNull OpenOptions options, @Nullable Cost cost) {
         Crate crate = source.getCrate();
+        Cost realCost = options.has(OpenOptions.Option.IGNORE_COST) ? null : cost;
+        if (Config.OPENING_REQUIRE_KEY.get() && !KeyRequirement.isValidCost(crate, realCost)) {
+            this.rejectKeyConfiguration(player, source);
+            return false;
+        }
         CrateUser user = plugin.getUserManager().getOrFetch(player);
         UserCrateData userCrate = user.getCrateData(crate);
-        Cost realCost = options.has(OpenOptions.Option.IGNORE_COST) ? null : cost;
 
         if (!this.testRestrictions(player, crate)) {
             this.pushback(player, source);
@@ -591,7 +603,8 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
             }
         }
 
-        if (realCost != null && !realCost.canAfford(player)) {
+        if (realCost != null && (!realCost.canAfford(player)
+            || (Config.OPENING_REQUIRE_KEY.get() && !KeyRequirement.hasEnoughKeys(player, realCost)))) {
             Lang.CRATE_OPEN_TOO_EXPENSIVE.message().send(player, replacer -> replacer
                 .replace(crate.replacePlaceholders())
                 .replace(Placeholders.GENERIC_COSTS, () -> realCost.formatInline(", ")) // TODO Delimiter lang
@@ -611,7 +624,21 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
 
         Opening opening = this.plugin.getOpeningManager().createOpening(player, source, realCost);
 
-        this.plugin.getOpeningManager().startOpening(player, opening, options.has(OpenOptions.Option.IGNORE_ANIMATION));
+        // Events, inventory-close handlers and opening providers can change keys or costs.
+        // Recheck after those callbacks and immediately before charging.
+        if (Config.OPENING_REQUIRE_KEY.get()) {
+            if (!KeyRequirement.isValidCost(crate, realCost)) {
+                this.rejectKeyConfiguration(player, source);
+                return false;
+            }
+            if (!KeyRequirement.hasEnoughKeys(player, realCost) || !realCost.canAfford(player)) {
+                Lang.CRATE_OPEN_TOO_EXPENSIVE.message().send(player, replacer -> replacer
+                    .replace(crate.replacePlaceholders())
+                    .replace(Placeholders.GENERIC_COSTS, () -> realCost.formatInline(", ")));
+                this.pushback(player, source);
+                return false;
+            }
+        }
 
         if (realCost != null) {
             realCost.takeAll(player);
@@ -622,7 +649,24 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
             item.setAmount(item.getAmount() - 1);
         }
 
+        // Instant openings can award rewards synchronously, so payment must precede startOpening.
+        this.plugin.getOpeningManager().startOpening(player, opening, options.has(OpenOptions.Option.IGNORE_ANIMATION));
+
         return true;
+    }
+
+    private void rejectKeyConfiguration(Player player, CrateSource source) {
+        Crate crate = source.getCrate();
+        Lang.CRATE_OPEN_ERROR_KEY_CONFIGURATION.message().send(player);
+        this.pushback(player, source);
+        if (this.warnedKeyConfigurations.add(crate.getId())) {
+            List<String> keyIds = crate.getCosts().stream().flatMap(cost -> cost.getEntries().stream())
+                .filter(KeyCostEntry.class::isInstance).map(KeyCostEntry.class::cast)
+                .map(KeyCostEntry::getKeyId).distinct().toList();
+            this.plugin.warn("Blocked opening of crate '" + crate.getId() + "': a valid enabled key cost is required; "
+                + "configured key IDs=" + keyIds + ". Check CostOptions and key files. Cost bypass is disabled. "
+                + "Further blocked-opening warnings for this crate are suppressed until reload.");
+        }
     }
 
     private void pushback(@NotNull Player player, @NotNull CrateSource source) {
