@@ -76,6 +76,21 @@ public final class ItemDataUpgrade {
             String data = path + ".Data";
             int source = config.getInt(data + ".DataVersion", -1);
             if (source == target) continue;
+            if (source <= 0 && target >= HiddenComponentsFix.MAP_COLOR_REMOVAL) {
+                // Unknown version: nightcore decodes these without the data fixer. Only repair hidden_components names
+                // that 26.3 no longer knows, and only if that is what makes the item decodable. The version stays as is.
+                try {
+                    String repaired = repairUnknownVersion(config.getString(data + ".Value"), target);
+                    if (repaired != null) {
+                        config.set(data + ".Value", repaired);
+                        upgraded++;
+                        continue;
+                    }
+                }
+                catch (Exception exception) {
+                    warning.accept("Item data repair skipped '" + file + "' at " + data + ": " + exception.getMessage());
+                }
+            }
             if (source <= 0 || source > target) { skipped++; continue; }
             String tag = config.getString(data + ".Value");
             try {
@@ -113,6 +128,7 @@ public final class ItemDataUpgrade {
         Object original = NbtUtil.tagFromString(tag);
         if (original == null) throw new IllegalArgumentException("Invalid item tag");
         Object updated = Codec.update(original, source, target);
+        HiddenComponentsFix.apply(updated, source, target);
         ItemStack before = Codec.decode(updated);
         if (before.getType().isAir() || before.getAmount() <= 0) throw new IllegalArgumentException("Empty item");
         String serialized = updated.toString();
@@ -121,6 +137,28 @@ public final class ItemDataUpgrade {
             throw new IllegalStateException("Item round-trip changed its contents");
         }
         // Store the complete upgraded tag, not a Bukkit re-serialization that could omit extra fields.
+        return serialized;
+    }
+
+    /** Returns the repaired tag, or null if the item already decodes or has nothing to repair. */
+    private static String repairUnknownVersion(String tag, int target) throws Exception {
+        if (tag == null || tag.isBlank()) return null;
+        Object original = NbtUtil.tagFromString(tag);
+        if (original == null) return null;
+        try {
+            Codec.decode(original);
+            return null; // decodes as it is
+        }
+        catch (Exception ignored) {}
+        // Treat the unknown version as older than both 26.3 component changes.
+        if (!HiddenComponentsFix.apply(original, 0, target)) return null;
+        ItemStack item = Codec.decode(original);
+        if (item.getType().isAir() || item.getAmount() <= 0) throw new IllegalArgumentException("Empty item");
+        String serialized = original.toString();
+        Object reparsed = NbtUtil.tagFromString(serialized);
+        if (!original.equals(reparsed) || !item.equals(Codec.decode(reparsed))) {
+            throw new IllegalStateException("Item round-trip changed its contents");
+        }
         return serialized;
     }
 
@@ -157,6 +195,69 @@ public final class ItemDataUpgrade {
             ByteBuffer buffer = ByteBuffer.wrap(bytes);
             while (buffer.hasRemaining()) channel.write(buffer);
             channel.force(true);
+        }
+    }
+
+    /**
+     * Minecraft 26.3's data fixer renames/removes the swing_animation (data version 5007) and map_color (5008) components,
+     * but does not update names listed in "minecraft:tooltip_display" hidden_components. The strict item codec then rejects
+     * the whole item. Apply the same rename/removal to that list; anything else is left for the codec to judge.
+     */
+    static final class HiddenComponentsFix {
+        static final int SWING_ANIMATION_SPLIT = 5007;
+        static final int MAP_COLOR_REMOVAL = 5008;
+
+        private HiddenComponentsFix() {}
+
+        static boolean crosses(int source, int target, int version) {
+            return source < version && target >= version;
+        }
+
+        /** Returns the fixed list of names, or null when nothing changes. */
+        static List<String> fix(List<String> names, int source, int target) {
+            boolean split = crosses(source, target, SWING_ANIMATION_SPLIT);
+            boolean removeMapColor = crosses(source, target, MAP_COLOR_REMOVAL);
+            if (!split && !removeMapColor) return null;
+            LinkedHashSet<String> result = new LinkedHashSet<>();
+            boolean changed = false;
+            for (String name : names) {
+                String id = name.indexOf(':') < 0 ? "minecraft:" + name : name;
+                if (split && id.equals("minecraft:swing_animation")) {
+                    result.add("minecraft:attack_animation");
+                    result.add("minecraft:interact_animation");
+                    changed = true;
+                }
+                else if (removeMapColor && id.equals("minecraft:map_color")) changed = true;
+                else result.add(name);
+            }
+            return changed ? new ArrayList<>(result) : null;
+        }
+
+        static boolean apply(Object tag, int source, int target) throws Exception {
+            if (!crosses(source, target, SWING_ANIMATION_SPLIT) && !crosses(source, target, MAP_COLOR_REMOVAL)) return false;
+            Class<?> compound = Class.forName("net.minecraft.nbt.CompoundTag");
+            Class<?> stringTag = Class.forName("net.minecraft.nbt.StringTag");
+            Class<?> tagClass = Class.forName("net.minecraft.nbt.Tag");
+            Method get = compound.getMethod("get", String.class);
+            Object components = compound.isInstance(tag) ? get.invoke(tag, "components") : null;
+            Object display = compound.isInstance(components) ? get.invoke(components, "minecraft:tooltip_display") : null;
+            Object hidden = compound.isInstance(display) ? get.invoke(display, "hidden_components") : null;
+            if (!(hidden instanceof List<?> list)) return false;
+            Method value = stringTag.getMethod("value");
+            List<String> names = new ArrayList<>();
+            for (Object element : list) {
+                if (!stringTag.isInstance(element)) return false; // unexpected shape: leave it to the codec
+                names.add((String) value.invoke(element));
+            }
+            List<String> fixed = fix(names, source, target);
+            if (fixed == null) return false;
+            Method valueOf = stringTag.getMethod("valueOf", String.class);
+            Class<?> listTag = Class.forName("net.minecraft.nbt.ListTag");
+            @SuppressWarnings("unchecked")
+            List<Object> replacement = (List<Object>) listTag.getConstructor().newInstance();
+            for (String name : fixed) replacement.add(valueOf.invoke(null, name));
+            compound.getMethod("put", String.class, tagClass).invoke(display, "hidden_components", replacement);
+            return true;
         }
     }
 

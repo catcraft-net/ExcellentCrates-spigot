@@ -1,4 +1,27 @@
-# CatCraft candidate 6.6.1-catcraft.3
+# CatCraft candidate 6.6.1-catcraft.4 (Paper 26.3)
+
+## Changes in .4
+
+- Built against nightcore **2.16.6** (Modrinth, lists 26.3). nightcore 2.16.4 fails on Paper 26.3
+  (`Could not find asBukkitCopy`), and ExcellentCrates cannot enable without nightcore. Deploy
+  `nightcore-2.16.6.jar` together with this jar.
+- Item-data upgrade: Minecraft 26.3's data fixer splits `minecraft:swing_animation` into
+  `minecraft:attack_animation` + `minecraft:interact_animation` (data version 5007) and removes
+  `minecraft:map_color` (5008), but it does not update the names listed in
+  `minecraft:tooltip_display` `hidden_components`. The 26.3 item codec rejects such items completely
+  ("Unknown registry key ... minecraft:map_color"). Many CatCraft reward items hide every component,
+  so their lists contain both names. The upgrade now applies the same rename/removal to that list
+  (only when the upgrade crosses those data versions); everything else is unchanged.
+- Items stored with an unknown data version (0 or -1) are still not run through the data fixer
+  (nightcore decodes them as they are). If such an item no longer decodes on 26.3 and the only
+  problem is one of those two names in `hidden_components`, the list is repaired and the version
+  is left as it was. Items that decode already, or fail for another reason, are untouched.
+- Nothing else changed from .3.
+
+The first 26.3 start upgrades every stored vanilla item (26.2 data version 4903 -> 26.3 data version
+5023) and writes one backup per changed file under `plugins/ExcellentCrates/item-data-backups/`.
+
+# Previous notes (6.6.1-catcraft.3)
 
 Based on CatCraft ExcellentCrates revision `d9ba2393a5dc812368379acc907f61a34aabb7bb`.
 This candidate retains crate-list search and the default-on strict key safeguard.
@@ -88,20 +111,22 @@ configuration are not a production benchmark or a guaranteed speedup.
 
 Use Maven and JDK 21 or newer. The code targets Java 21. The original build's
 nightcore `main:2.10.0` could not be resolved from the configured repositories.
-This candidate compiles against the exact local nightcore 2.16.4 JAR inspected
-for the investigation. A fresh build needs that dependency installed locally;
-availability of a remotely published artifact is not assumed.
+This candidate compiles against nightcore 2.16.6, which is not published to
+repo.nightexpressdev.com (it stops at 2.16.4). Install the Modrinth jar locally first:
+https://cdn.modrinth.com/data/Y4NRwMW5/versions/AIeSQerQ/nightcore-2.16.6.jar
+(SHA-256 `9c82a7d2e76277c0cf490e7c85b2ce827d953ec0a7977337c25690c56b472c5a`).
 
 ```sh
 mvn -Dmaven.repo.local=./.m2 org.apache.maven.plugins:maven-install-plugin:3.1.3:install-file \
-  -Dfile=/path/to/nightcore-2.16.4.jar \
-  -DgroupId=su.nightexpress.nightcore -DartifactId=main -Dversion=2.16.4 \
+  -Dfile=/path/to/nightcore-2.16.6.jar \
+  -DgroupId=su.nightexpress.nightcore -DartifactId=main -Dversion=2.16.6 \
   -Dpackaging=jar -DgeneratePom=true
 mvn -Dmaven.repo.local=./.m2 clean verify
 ```
 
-Expected artifact: `target/ExcellentCrates-6.6.1-catcraft.3.jar`.
-`verify` runs ten matcher tests. No JUnit or test classes are shipped in that JAR.
+Expected artifact: `target/ExcellentCrates-6.6.1-catcraft.4.jar` (built with JDK 25, class files target Java 21).
+The 6.6.1-catcraft.3 jar was built with JDK 21 against nightcore 2.16.4.
+`verify` runs ten matcher tests and five hidden-components fix tests. No JUnit or test classes are shipped in that JAR.
 The supporting nightcore JAR SHA-256 is
 `0449d8700b41f13a458caedb68f9959db35f89d01ea05ef0d0907812484aa8ab`.
 
