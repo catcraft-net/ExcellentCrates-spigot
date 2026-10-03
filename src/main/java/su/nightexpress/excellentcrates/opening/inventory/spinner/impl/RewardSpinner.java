@@ -36,6 +36,7 @@ public class RewardSpinner extends AbstractSpinner {
     public RewardSpinner(@NotNull SpinnerData data, @NotNull InventoryOpening opening, @NotNull Set<Rarity> rarities, boolean showcase) {
         super(data, opening);
         this.rarities = rarities;
+        opening.getCrate().getRewards(opening.getPlayer()).forEach(RewardSpinner::preview);
         if (showcase && data.getMode() == SpinMode.SEQUENTAL) {
             List<Reward> ultras = new java.util.ArrayList<>(opening.getCrate().getRewards(opening.getPlayer()));
             ultras.removeIf(reward -> !reward.isBroadcast() || !rarities.contains(reward.getRarity()));
@@ -92,7 +93,19 @@ public class RewardSpinner extends AbstractSpinner {
         Reward reward = this.shouldUsePredictedReward(slot) ? this.opening.getRewards().get(this.rewardIndex++) : this.showcaseOrRoll();
         if (reward == null) return new ItemStack(Material.AIR);
 
-        return reward.getPreviewItem();
+        return preview(reward);
+    }
+
+    /**
+     * CatCraft: reward previews are built once and reused (building an ExecutableItems item every reel
+     * move cost ~3 ms each and made the start of the reel stutter on busy servers). Reward objects are
+     * recreated on /crates reload, so the weak keys drop stale entries.
+     */
+    private static final java.util.Map<Reward, ItemStack> PREVIEWS = java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+
+    @NotNull
+    private static ItemStack preview(@NotNull Reward reward) {
+        return PREVIEWS.computeIfAbsent(reward, Reward::getPreviewItem).clone();
     }
 
     /**

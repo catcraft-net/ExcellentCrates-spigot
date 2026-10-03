@@ -204,6 +204,28 @@ public class Config {
         "ultras last with a fanfare) instead of a result message per opening."
     );
 
+    public static final ConfigValue<Double> MASS_OPENING_SUMMARY_CLOSE_BASE = ConfigValue.create("Crate.MassOpening.Summary_Close.Base_Seconds",
+        3D,
+        "[CatCraft] The summary closes by itself this long after it finishes filling, plus Per_Item_Seconds",
+        "for each win shown, plus Ultra_Seconds if an ultra (broadcast reward) was won, up to Max_Seconds.",
+        "Set Base_Seconds and Per_Item_Seconds to 0 to keep it open until the player closes it."
+    );
+
+    public static final ConfigValue<Double> MASS_OPENING_SUMMARY_CLOSE_PER_ITEM = ConfigValue.create("Crate.MassOpening.Summary_Close.Per_Item_Seconds",
+        0.15D,
+        "[CatCraft] Extra seconds per win shown in the summary."
+    );
+
+    public static final ConfigValue<Double> MASS_OPENING_SUMMARY_CLOSE_ULTRA = ConfigValue.create("Crate.MassOpening.Summary_Close.Ultra_Seconds",
+        2D,
+        "[CatCraft] Extra seconds when the summary shows an ultra (broadcast reward)."
+    );
+
+    public static final ConfigValue<Double> MASS_OPENING_SUMMARY_CLOSE_MAX = ConfigValue.create("Crate.MassOpening.Summary_Close.Max_Seconds",
+        10D,
+        "[CatCraft] The longest the summary stays open after filling."
+    );
+
     public static final ConfigValue<Integer> MASS_OPENING_PER_TICK = ConfigValue.create("Crate.MassOpening.Per_Tick",
         3,
         "[CatCraft] How many crates a Mass Opening opens per server tick. Lower = smoother TPS, slower result."

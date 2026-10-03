@@ -15,6 +15,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 import su.nightexpress.excellentcrates.CratesPlugin;
 import su.nightexpress.excellentcrates.api.crate.Reward;
+import su.nightexpress.excellentcrates.config.Config;
 import su.nightexpress.excellentcrates.crate.impl.Crate;
 import su.nightexpress.nightcore.util.text.night.NightMessage;
 
@@ -79,8 +80,13 @@ public final class MassOpenSummary implements InventoryHolder {
 
             @Override
             public void run() {
-                if (index >= shown || player.getOpenInventory().getTopInventory() != inventory) {
+                if (player.getOpenInventory().getTopInventory() != inventory) {
                     this.cancel();
+                    return;
+                }
+                if (index >= shown) {
+                    this.cancel();
+                    scheduleClose(shown);
                     return;
                 }
                 Entry entry = entries.get(index);
@@ -95,6 +101,19 @@ public final class MassOpenSummary implements InventoryHolder {
                 index++;
             }
         }.runTaskTimer(this.plugin, 10L, FILL_INTERVAL);
+    }
+
+    /** Closes the summary after a hold based on how many wins it shows (longer when an ultra is shown). */
+    private void scheduleClose(int shown) {
+        double seconds = Config.MASS_OPENING_SUMMARY_CLOSE_BASE.get() + Config.MASS_OPENING_SUMMARY_CLOSE_PER_ITEM.get() * shown;
+        if (this.entries.stream().anyMatch(entry -> entry.reward().isBroadcast())) seconds += Config.MASS_OPENING_SUMMARY_CLOSE_ULTRA.get();
+        seconds = Math.min(seconds, Config.MASS_OPENING_SUMMARY_CLOSE_MAX.get());
+        if (seconds <= 0) return;
+        this.plugin.runTaskLater(() -> {
+            if (this.player.isOnline() && this.player.getOpenInventory().getTopInventory() == this.inventory) {
+                this.player.closeInventory();
+            }
+        }, Math.round(seconds * 20));
     }
 
     @NotNull

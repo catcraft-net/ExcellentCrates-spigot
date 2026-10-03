@@ -26,6 +26,10 @@
 - **Mass openings are spread over ticks** (`Crate.MassOpening.Per_Tick`, default 3), so 27 openings take
   9 ticks instead of freezing one. Crate clicks are ignored while a mass opening runs, while its summary is
   open and for 1 second after (held right-clicks used to start another one and close the summary).
+- **Reward previews are cached** (built once per reward, dropped on reload), so reels don't stutter
+  building custom items every move.
+- **Summary auto-close** (`Crate.MassOpening.Summary_Close`): closes Base_Seconds (3) + Per_Item_Seconds
+  (0.15) per win after it finishes filling, + Ultra_Seconds (2) if an ultra was won, up to Max_Seconds (10).
 - **Mass-open summary** (`Crate.MassOpening.Summary`, default true): one read-only results screen after a
   mass opening, one slot per win (rows grow with the keys used: 18 keys = 2 rows, up to 6 rows; wins are
   only grouped beyond 54). Wins fill in from most to least likely, broadcast (ultra) rewards last with a
