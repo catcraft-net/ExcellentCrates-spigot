@@ -90,7 +90,13 @@ public abstract class AbstractSpinner implements Spinner {
         }
 
         if (this.isSpinTime()) {
-            this.onSpin();
+            // CatCraft: a step with a burst moves several times in this tick (until the step ends).
+            SpinStep step = this.currentStep;
+            int burst = step == null ? 1 : step.getBurst();
+            for (int count = 0; count < burst; count++) {
+                this.onSpin();
+                if (this.currentStep != step || this.currentStep == null) break;
+            }
         }
 
         this.tickCount = Math.max(0L, this.tickCount + 1L);

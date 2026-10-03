@@ -13,6 +13,8 @@
   crate's broadcast rewards (up to 3) passing through the reel in every spin, as late as possible while
   honest: the last one leaves the reel exactly when the real prize enters for the final creep, the
   others 3 moves earlier each. They cross at a readable speed and never sit next to the prize.
+- **Burst steps.** A spinner step can be `amount:interval:burst`, e.g. `30:1:2` = 30 moves, every tick,
+  2 at a time (40 slots per second instead of the usual maximum of 20). Without a burst it behaves as before.
 - **Click to skip.** Clicking in an opening window skips the spin (while `Max_Ticks_To_Skip` allows), and
   clicking during the reveal/result closes it immediately.
 - **/crates fast** (permission `excellentcrates.command.fast`, default true) toggles a per-player
