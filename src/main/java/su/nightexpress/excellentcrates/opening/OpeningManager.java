@@ -25,6 +25,7 @@ public class OpeningManager extends AbstractManager<CratesPlugin> {
 
     private final Map<String, OpeningProvider> providerByIdMap;
     private final Map<UUID, Opening>           openingByPlayerMap;
+    private final Map<UUID, java.util.List<su.nightexpress.excellentcrates.api.crate.Reward>> massRewards = new java.util.HashMap<>(); // CatCraft
 
     private final DummyProvider dummyProvider;
 
@@ -41,6 +42,7 @@ public class OpeningManager extends AbstractManager<CratesPlugin> {
         this.loadProviders();
 
         this.addListener(new OpeningListener(this.plugin, this));
+        su.nightexpress.excellentcrates.opening.summary.MassOpenSummary.registerGuard(this.plugin);
 
         this.addTask(this::tickOpenings, 1L);
     }
@@ -194,5 +196,24 @@ public class OpeningManager extends AbstractManager<CratesPlugin> {
         opening.start(); // Start ticking
 
         if (instaRoll) opening.instaRoll();
+    }
+
+    // CatCraft: collect the rewards of a mass opening for one summary screen.
+    public void startCollecting(@NotNull Player player) {
+        this.massRewards.put(player.getUniqueId(), new java.util.ArrayList<>());
+    }
+
+    /** Adds the rewards if a mass opening is being collected for this player. */
+    public boolean collect(@NotNull Player player, @NotNull java.util.Collection<su.nightexpress.excellentcrates.api.crate.Reward> rewards) {
+        java.util.List<su.nightexpress.excellentcrates.api.crate.Reward> list = this.massRewards.get(player.getUniqueId());
+        if (list == null) return false;
+        list.addAll(rewards);
+        return true;
+    }
+
+    @NotNull
+    public java.util.List<su.nightexpress.excellentcrates.api.crate.Reward> stopCollecting(@NotNull Player player) {
+        java.util.List<su.nightexpress.excellentcrates.api.crate.Reward> list = this.massRewards.remove(player.getUniqueId());
+        return list == null ? java.util.List.of() : list;
     }
 }

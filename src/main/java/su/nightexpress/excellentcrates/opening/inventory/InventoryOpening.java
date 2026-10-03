@@ -26,6 +26,9 @@ public class InventoryOpening extends AbstractOpening {
     protected final List<Spinner>    spinners;
 
     private boolean launched;
+    private boolean revealed; // CatCraft: reveal started
+    private boolean skipQueued; // CatCraft: click-to-skip scheduled
+    private CrateTheme theme;
     private long    closeTicks;
     private long    launchTicks;
 
@@ -63,6 +66,38 @@ public class InventoryOpening extends AbstractOpening {
         if ((clickedInv.getType() != InventoryType.CRAFTING && clickedInv.getType() != InventoryType.CREATIVE) || !this.isSpinnersCompleted()) {
             event.setCancelled(true);
         }
+
+        // CatCraft: a click in the opening window skips the spin (while skipping is allowed), or
+        // closes it straight away once the result is showing.
+        if (!this.launched || this.skipQueued || event.getView() != this.view) return;
+        if (this.isSpinnersCompleted()) {
+            this.closeTicks = 0L;
+        }
+        else if (this.revealed) {
+            this.closeTicks = 0L;
+            this.getSpinners().forEach(spinner -> { spinner.setSilent(true); spinner.tickAll(); spinner.stop(); });
+        }
+        else if (this.canSkip()) {
+            this.skipQueued = true;
+            this.plugin.runTask(this::instaRoll);
+        }
+    }
+
+    /** CatCraft: the crate's colours for themed spinner items. */
+    @NotNull
+    public CrateTheme getTheme() {
+        if (this.theme == null) this.theme = CrateTheme.of(this.getCrate());
+        return this.theme;
+    }
+
+    private boolean isRewardSpinnersCompleted() {
+        boolean any = false;
+        for (Spinner spinner : this.spinners) {
+            if (!(spinner instanceof su.nightexpress.excellentcrates.opening.inventory.spinner.impl.RewardSpinner)) continue;
+            any = true;
+            if (!spinner.hasSpin() || (spinner.isRunning() && !spinner.isCompleted())) return false;
+        }
+        return any;
     }
 
     @Override
@@ -96,6 +131,15 @@ public class InventoryOpening extends AbstractOpening {
 
         this.getSpinners().forEach(Spinner::tick);
         this.launchTicks++;
+
+        // CatCraft: when every reward spinner has stopped, start the reveal that matches what was won.
+        if (!this.revealed && this.isRewardSpinnersCompleted()) {
+            this.revealed = true;
+            this.config.getReveals().stream()
+                .filter(reveal -> reveal.matches(this.getRewards()))
+                .findFirst()
+                .ifPresent(reveal -> reveal.spinners().forEach(this::runSpinner));
+        }
     }
 
     @Override

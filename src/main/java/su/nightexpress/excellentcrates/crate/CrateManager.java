@@ -529,9 +529,20 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
             options.with(OpenOptions.Option.IGNORE_ANIMATION);
         }
 
+        boolean summary = openings > 1 && Config.MASS_OPENING_SUMMARY.get();
+        if (summary) this.plugin.getOpeningManager().startCollecting(player);
+
         for (int spent = 0; spent < openings; spent++) {
             if (!this.openCrate(player, source, options, cost)) {
                 break;
+            }
+        }
+
+        // CatCraft: one results screen for the whole mass opening.
+        if (summary) {
+            List<Reward> won = this.plugin.getOpeningManager().stopCollecting(player);
+            if (!won.isEmpty()) {
+                new su.nightexpress.excellentcrates.opening.summary.MassOpenSummary(this.plugin, player, source.getCrate(), won).open();
             }
         }
     }
@@ -650,7 +661,8 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
         }
 
         // Instant openings can award rewards synchronously, so payment must precede startOpening.
-        this.plugin.getOpeningManager().startOpening(player, opening, options.has(OpenOptions.Option.IGNORE_ANIMATION));
+        boolean instant = options.has(OpenOptions.Option.IGNORE_ANIMATION) || su.nightexpress.excellentcrates.opening.FastOpen.isEnabled(this.plugin, player); // CatCraft: /crates fast
+        this.plugin.getOpeningManager().startOpening(player, opening, instant);
 
         return true;
     }

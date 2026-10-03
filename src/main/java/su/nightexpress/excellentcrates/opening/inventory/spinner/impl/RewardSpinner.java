@@ -24,11 +24,22 @@ public class RewardSpinner extends AbstractSpinner {
 
     private final Set<Rarity> rarities;
 
+    private final java.util.Deque<Reward> showcase = new java.util.ArrayDeque<>(); // CatCraft
     private int rewardIndex;
 
     public RewardSpinner(@NotNull SpinnerData data, @NotNull InventoryOpening opening, @NotNull Set<Rarity> rarities) {
+        this(data, opening, rarities, false);
+    }
+
+    public RewardSpinner(@NotNull SpinnerData data, @NotNull InventoryOpening opening, @NotNull Set<Rarity> rarities, boolean showcase) {
         super(data, opening);
         this.rarities = rarities;
+        if (showcase && data.getMode() == SpinMode.SEQUENTAL) {
+            List<Reward> ultras = new java.util.ArrayList<>(opening.getCrate().getRewards(opening.getPlayer()));
+            ultras.removeIf(reward -> !reward.isBroadcast() || !rarities.contains(reward.getRarity()));
+            java.util.Collections.shuffle(ultras);
+            this.showcase.addAll(ultras);
+        }
         this.rewardIndex = opening.getRewards().size(); // Start from latest index after previous reward spinners added their rewards.
 
         this.prepareRewards();
@@ -75,10 +86,29 @@ public class RewardSpinner extends AbstractSpinner {
     @Override
     @NotNull
     public ItemStack createItem(int slot) {
-        Reward reward = this.shouldUsePredictedReward(slot) ? this.opening.getRewards().get(this.rewardIndex++) : this.rollReward(true);
+        Reward reward = this.shouldUsePredictedReward(slot) ? this.opening.getRewards().get(this.rewardIndex++) : this.showcaseOrRoll();
         if (reward == null) return new ItemStack(Material.AIR);
 
         return reward.getPreviewItem();
+    }
+
+    /**
+     * CatCraft showcase: the crate's ultras pass through the reel in every spin, one every 3 moves,
+     * but only while they will scroll out again before the reel stops. They are never placed to land
+     * next to the win slot; the result and its neighbours stay random (no staged near-misses).
+     */
+    @NotNull
+    private Reward showcaseOrRoll() {
+        if (!this.showcase.isEmpty()) {
+            int spinsLeft = Math.toIntExact(this.requiredSpins - this.spinCount);
+            if (spinsLeft <= this.slots.length) {
+                this.showcase.clear(); // Too late: it would still be on screen when the reel stops.
+            }
+            else if (this.spinCount % 3 == 1) {
+                return this.showcase.poll();
+            }
+        }
+        return this.rollReward(true);
     }
 
     private boolean shouldUsePredictedReward(int slot) {

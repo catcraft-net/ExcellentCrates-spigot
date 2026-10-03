@@ -32,6 +32,11 @@ public class Lang implements LangContainer {
     public static final TextLocale COMMAND_EDITOR_DESC         = LangEntry.builder("Command.Editor.Desc").text("Open editor GUI.");
     public static final TextLocale COMMAND_DROP_DESC           = LangEntry.builder("Command.Drop.Desc").text("Spawn crate item in the world.");
     public static final TextLocale COMMAND_DROP_KEY_DESC       = LangEntry.builder("Command.DropKey.Desc").text("Spawn key item in the world.");
+    public static final TextLocale COMMAND_FAST_DESC           = LangEntry.builder("Command.Fast.Desc").text("Toggle skipping crate opening animations.");
+    public static final MessageLocale COMMAND_FAST_ON  = LangEntry.builder("Command.Fast.On").chatMessage(
+        GRAY.wrap("Fast opening " + GREEN.wrap("enabled") + ": crates open instantly. Use " + WHITE.wrap("/crates fast") + " again to see animations."));
+    public static final MessageLocale COMMAND_FAST_OFF = LangEntry.builder("Command.Fast.Off").chatMessage(
+        GRAY.wrap("Fast opening " + RED.wrap("disabled") + ": opening animations are back."));
     public static final TextLocale COMMAND_OPEN_DESC           = LangEntry.builder("Command.Open.Desc").text("Open a crate.");
     public static final TextLocale COMMAND_OPEN_FOR_DESC       = LangEntry.builder("Command.OpenFor.Desc").text("Open crate for a player.");
     public static final TextLocale COMMAND_GIVE_DESC           = LangEntry.builder("Command.Give.Desc").text("Gives crate to a player.");

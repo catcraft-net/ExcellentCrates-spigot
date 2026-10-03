@@ -198,6 +198,12 @@ public class Config {
         "Controls whether players can do Mass Opening by opening crates while sneaking."
     );
 
+    public static final ConfigValue<Boolean> MASS_OPENING_SUMMARY = ConfigValue.create("Crate.MassOpening.Summary",
+        true,
+        "[CatCraft] Shows one results screen after a Mass Opening (wins fill in from most common to rarest,",
+        "ultras last with a fanfare) instead of a result message per opening."
+    );
+
     public static final ConfigValue<Integer> MASS_OPENING_LIMIT = ConfigValue.create("Crate.Mass_Opening_Limit",
         30,
         "Limits amount of crate openings for the Mass Opening feature to this value.",
