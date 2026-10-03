@@ -147,10 +147,7 @@ public class RewardSpinner extends AbstractSpinner {
      */
     @Override
     public void tickAll() {
-        if (!this.running) return;
-        this.spinCount = Math.max(this.spinCount, this.requiredSpins);
-        this.steps.clear();
-        this.currentStep = null;
+        super.tickAll();
         this.rewardIndex = this.opening.getRewards().size();
     }
 

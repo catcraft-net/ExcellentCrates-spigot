@@ -226,6 +226,12 @@ public class Config {
         "[CatCraft] The longest the summary stays open after filling."
     );
 
+    public static final ConfigValue<Integer> MASS_OPENING_GLOBAL_PER_TICK = ConfigValue.create("Crate.MassOpening.Global_Per_Tick",
+        12,
+        "[CatCraft] The most crates all Mass Openings together may open per server tick (players take turns),",
+        "so many players mass-opening at once can't cause a lag spike."
+    );
+
     public static final ConfigValue<Integer> MASS_OPENING_PER_TICK = ConfigValue.create("Crate.MassOpening.Per_Tick",
         3,
         "[CatCraft] How many crates a Mass Opening opens per server tick. Lower = smoother TPS, slower result."

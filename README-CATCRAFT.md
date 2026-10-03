@@ -23,8 +23,9 @@
   clicking during the reveal/result closes it immediately.
 - **/crates fast** (permission `excellentcrates.command.fast`, default true) toggles a per-player
   preference to open crates without animations (stored on the player).
-- **Mass openings are spread over ticks** (`Crate.MassOpening.Per_Tick`, default 3), so 27 openings take
-  9 ticks instead of freezing one. Crate clicks are ignored while a mass opening runs, while its summary is
+- **Mass openings go through one server-wide queue**: at most `Crate.MassOpening.Global_Per_Tick` (12)
+  openings per tick across all players, up to `Per_Tick` (3) per player per turn, players taking turns.
+  Instant/skipped openings jump every spinner to its end without building any display items. Crate clicks are ignored while a mass opening runs, while its summary is
   open and for 1 second after (held right-clicks used to start another one and close the summary).
 - **Reward previews are cached** (built once per reward, dropped on reload), so reels don't stutter
   building custom items every move.
@@ -34,6 +35,9 @@
   mass opening, one slot per win (rows grow with the keys used: 18 keys = 2 rows, up to 6 rows; wins are
   only grouped beyond 54). Wins fill in from most to least likely, broadcast (ultra) rewards last with a
   glint and the challenge sound. The per-opening result chat lines are skipped.
+- Stress-tested on Paper 26.3 with 25 bots for ~3 minutes (simultaneous 27-key launch burst, mass openings,
+  animated Spotlight/Jackpot/Supernova openings, click-skips, /crates fast): mean tick 4.9 ms, no tick over
+  60 ms during the launch burst, every reward delivered (675/675), no errors, no leaked openings after GC.
 - Tested on Paper 26.3 with bots (normal and ultra reveals, themes, showcase, click-skip, click-close,
   fast mode, 10-key mass opening).
 

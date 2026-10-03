@@ -74,6 +74,7 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
     private final Map<String, PreviewMenu> previewByIdMap;
     private final Map<UUID, Long>          previewCooldown;
     private final Set<String> warnedKeyConfigurations = new HashSet<>();
+    private final MassOpenQueue massOpenQueue = new MassOpenQueue(this.plugin, this); // CatCraft
 
     private OpeningCostMenu   costMenu;
     private OpeningAmountMenu amountMenu;
@@ -109,6 +110,7 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
 
     @Override
     protected void onShutdown() {
+        this.massOpenQueue.shutdown();
         this.warnedKeyConfigurations.clear();
         this.saveCrates();
 
@@ -538,34 +540,8 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
             return;
         }
 
-        // CatCraft: spread a mass opening over several ticks (Per_Tick openings each) so the server keeps
-        // ticking, collect the rewards, and show one summary screen at the end.
-        boolean summary = Config.MASS_OPENING_SUMMARY.get();
-        int perTick = Math.max(1, Config.MASS_OPENING_PER_TICK.get());
-        su.nightexpress.excellentcrates.opening.summary.MassOpenSummary.markStarted(player);
-        if (summary) this.plugin.getOpeningManager().startCollecting(player);
-
-        new org.bukkit.scheduler.BukkitRunnable() {
-            int spent = 0;
-
-            @Override
-            public void run() {
-                boolean done = !player.isOnline();
-                for (int count = 0; count < perTick && !done; count++) {
-                    if (!openCrate(player, source, options, cost)) done = true;
-                    else if (++spent >= openings) done = true;
-                }
-                if (!done) return;
-
-                this.cancel();
-                su.nightexpress.excellentcrates.opening.summary.MassOpenSummary.markFinished(player);
-                if (!summary) return;
-                List<Reward> won = plugin.getOpeningManager().stopCollecting(player);
-                if (!won.isEmpty() && player.isOnline()) {
-                    new su.nightexpress.excellentcrates.opening.summary.MassOpenSummary(plugin, player, source.getCrate(), won).open();
-                }
-            }
-        }.runTaskTimer(this.plugin, 0L, 1L);
+        // CatCraft: queue it; the server-wide queue opens a few per tick, taking turns between players.
+        this.massOpenQueue.submit(player, source, options, cost, openings);
     }
 
     private boolean testRestrictions(@NotNull Player player, @NotNull Crate crate) {

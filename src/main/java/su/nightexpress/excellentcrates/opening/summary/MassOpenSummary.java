@@ -155,7 +155,10 @@ public final class MassOpenSummary implements InventoryHolder {
         if (IN_PROGRESS.contains(player.getUniqueId())) return true;
         if (player.getOpenInventory().getTopInventory().getHolder() instanceof MassOpenSummary) return true;
         Long last = LAST_MASS_OPEN.get(player.getUniqueId());
-        return last != null && System.currentTimeMillis() - last < 1000L;
+        if (last == null) return false;
+        if (System.currentTimeMillis() - last < 1000L) return true;
+        LAST_MASS_OPEN.remove(player.getUniqueId()); // expired: don't keep an entry per player forever
+        return false;
     }
 
     /** Registers the read-only guard once (managers are re-created on /crates reload). */
@@ -175,6 +178,12 @@ public final class MassOpenSummary implements InventoryHolder {
         @EventHandler
         public void onDrag(InventoryDragEvent event) {
             if (event.getInventory().getHolder() instanceof MassOpenSummary) event.setCancelled(true);
+        }
+
+        @EventHandler
+        public void onQuit(org.bukkit.event.player.PlayerQuitEvent event) {
+            LAST_MASS_OPEN.remove(event.getPlayer().getUniqueId());
+            IN_PROGRESS.remove(event.getPlayer().getUniqueId());
         }
     }
 

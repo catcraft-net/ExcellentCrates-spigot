@@ -102,17 +102,17 @@ public abstract class AbstractSpinner implements Spinner {
         this.tickCount = Math.max(0L, this.tickCount + 1L);
     }
 
+    /**
+     * CatCraft: used when an opening is skipped or instant (the window closes right after), so nothing is
+     * drawn: jump to the end instead of building every frame's items (hundreds per opening for decorated
+     * openings, which made mass openings expensive).
+     */
     @Override
     public void tickAll() {
         if (!this.running) return;
-
-        long total = Math.max(0L, this.getTotalSpins());
-
-        for (int count = 0; count < total; count++) {
-            if (this.isCompleted()) break;
-
-            this.onSpin();
-        }
+        this.spinCount = Math.max(this.spinCount, this.requiredSpins);
+        this.steps.clear();
+        this.currentStep = null;
     }
 
     @Override
