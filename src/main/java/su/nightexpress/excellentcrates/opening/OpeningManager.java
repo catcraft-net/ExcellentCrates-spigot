@@ -198,6 +198,10 @@ public class OpeningManager extends AbstractManager<CratesPlugin> {
         if (instaRoll) opening.instaRoll();
     }
 
+    public boolean isCollecting(@NotNull Player player) {
+        return this.massRewards.containsKey(player.getUniqueId());
+    }
+
     // CatCraft: collect the rewards of a mass opening for one summary screen.
     public void startCollecting(@NotNull Player player) {
         this.massRewards.put(player.getUniqueId(), new java.util.ArrayList<>());

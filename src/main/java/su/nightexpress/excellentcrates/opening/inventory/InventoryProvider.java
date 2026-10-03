@@ -147,8 +147,14 @@ public class InventoryProvider extends AbstractProvider {
                 }
                 holders.add(new SpinnerHolder(sId, SpinnerType.ANIMATION, data, AnimationProvider.read(config, providerPath)));
             });
+            // Same "name;volume;pitch" parser as spinner sounds.
+            java.util.List<su.nightexpress.nightcore.bridge.wrap.NightSound> skipSounds = new java.util.ArrayList<>();
+            config.getStringList(path + ".Skip_Sounds").forEach(raw -> {
+                su.nightexpress.nightcore.bridge.wrap.NightSound sound = su.nightexpress.nightcore.util.sound.AbstractSound.deserialize(raw);
+                if (sound != null) skipSounds.add(sound);
+            });
             this.reveals.add(new su.nightexpress.excellentcrates.opening.inventory.reveal.Reveal(
-                revealId.toLowerCase(), broadcast, maxChance, loreContains, rewardIds, holders));
+                revealId.toLowerCase(), broadcast, maxChance, loreContains, rewardIds, holders, skipSounds));
         });
     }
 

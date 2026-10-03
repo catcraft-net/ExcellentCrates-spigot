@@ -15,10 +15,17 @@
   others 3 moves earlier each. They cross at a readable speed and never sit next to the prize.
 - **Burst steps.** A spinner step can be `amount:interval:burst`, e.g. `30:1:2` = 30 moves, every tick,
   2 at a time (40 slots per second instead of the usual maximum of 20). Without a burst it behaves as before.
+- **Skip sounds.** A reveal's `Skip_Sounds` list (`name;volume;pitch`) plays when the opening is skipped
+  (click/close) or instant (`/crates fast`), so players still hear the result. Not during mass openings.
+- **Instant openings are cheap.** Skipped, `/crates fast` and mass openings no longer build every filler
+  item of the reel (the rewards are rolled up front); custom items made each one cost ~150 ms.
 - **Click to skip.** Clicking in an opening window skips the spin (while `Max_Ticks_To_Skip` allows), and
   clicking during the reveal/result closes it immediately.
 - **/crates fast** (permission `excellentcrates.command.fast`, default true) toggles a per-player
   preference to open crates without animations (stored on the player).
+- **Mass openings are spread over ticks** (`Crate.MassOpening.Per_Tick`, default 3), so 27 openings take
+  9 ticks instead of freezing one. Crate clicks are ignored while a mass opening runs, while its summary is
+  open and for 1 second after (held right-clicks used to start another one and close the summary).
 - **Mass-open summary** (`Crate.MassOpening.Summary`, default true): one read-only results screen after a
   mass opening, one slot per win (rows grow with the keys used: 18 keys = 2 rows, up to 6 rows; wins are
   only grouped beyond 54). Wins fill in from most to least likely, broadcast (ultra) rewards last with a

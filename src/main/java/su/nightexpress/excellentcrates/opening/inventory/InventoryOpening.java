@@ -176,6 +176,15 @@ public class InventoryOpening extends AbstractOpening {
 
     @Override
     public void instaRoll() {
+        // CatCraft: a skipped or instant opening still sounds like a result (not during mass openings,
+        // whose summary screen has its own sounds).
+        if (!this.revealed && !this.plugin.getOpeningManager().isCollecting(this.player)) {
+            this.revealed = true;
+            this.config.getReveals().stream()
+                .filter(reveal -> reveal.matches(this.getRewards()))
+                .findFirst()
+                .ifPresent(reveal -> reveal.skipSounds().forEach(sound -> sound.play(this.player)));
+        }
         this.closeTicks = 0L; // Do not schedule inventory closing.
         this.setRefundable(false); // Do not return keys.
 

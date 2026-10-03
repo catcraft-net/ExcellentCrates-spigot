@@ -204,6 +204,11 @@ public class Config {
         "ultras last with a fanfare) instead of a result message per opening."
     );
 
+    public static final ConfigValue<Integer> MASS_OPENING_PER_TICK = ConfigValue.create("Crate.MassOpening.Per_Tick",
+        3,
+        "[CatCraft] How many crates a Mass Opening opens per server tick. Lower = smoother TPS, slower result."
+    );
+
     public static final ConfigValue<Integer> MASS_OPENING_LIMIT = ConfigValue.create("Crate.Mass_Opening_Limit",
         30,
         "Limits amount of crate openings for the Mass Opening feature to this value.",

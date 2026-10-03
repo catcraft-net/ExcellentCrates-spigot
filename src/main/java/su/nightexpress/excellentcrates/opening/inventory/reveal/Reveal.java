@@ -14,14 +14,16 @@ import java.util.Set;
 /**
  * CatCraft: animation spinners started when the reward spinners stop, chosen by what was won.
  * Reveals are checked in config order; the first one whose {@code Match} fits any won reward runs.
- * An empty {@code Match} always fits, so put the catch-all reveal last.
+ * An empty {@code Match} always fits, so put the catch-all reveal last. {@code Skip_Sounds} play
+ * instead when the opening is skipped or instant (/crates fast), so players still hear the result.
  */
 public record Reveal(@NotNull String id,
                      @Nullable Boolean broadcast,
                      double maxChance,
                      @Nullable String loreContains,
                      @NotNull Set<String> rewardIds,
-                     @NotNull List<SpinnerHolder> spinners) {
+                     @NotNull List<SpinnerHolder> spinners,
+                     @NotNull List<su.nightexpress.nightcore.bridge.wrap.NightSound> skipSounds) {
 
     public boolean matches(@NotNull List<Reward> rewards) {
         return rewards.stream().anyMatch(this::matches);

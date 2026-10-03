@@ -481,6 +481,10 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
     public void preOpenCrate(@NotNull Player player, @NotNull CrateSource source) {
         Crate crate = source.getCrate();
 
+        // CatCraft: ignore crate clicks while a mass-open summary is showing, and for a second after a
+        // mass opening (held right-clicks would otherwise start another one and close the summary).
+        if (su.nightexpress.excellentcrates.opening.summary.MassOpenSummary.isBusy(player)) return;
+
         // Check if it's possible for a player to open crates.
         if (!this.testRestrictions(player, crate)) {
             this.pushback(player, source);
@@ -529,22 +533,39 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
             options.with(OpenOptions.Option.IGNORE_ANIMATION);
         }
 
-        boolean summary = openings > 1 && Config.MASS_OPENING_SUMMARY.get();
+        if (openings <= 1) {
+            this.openCrate(player, source, options, cost);
+            return;
+        }
+
+        // CatCraft: spread a mass opening over several ticks (Per_Tick openings each) so the server keeps
+        // ticking, collect the rewards, and show one summary screen at the end.
+        boolean summary = Config.MASS_OPENING_SUMMARY.get();
+        int perTick = Math.max(1, Config.MASS_OPENING_PER_TICK.get());
+        su.nightexpress.excellentcrates.opening.summary.MassOpenSummary.markStarted(player);
         if (summary) this.plugin.getOpeningManager().startCollecting(player);
 
-        for (int spent = 0; spent < openings; spent++) {
-            if (!this.openCrate(player, source, options, cost)) {
-                break;
-            }
-        }
+        new org.bukkit.scheduler.BukkitRunnable() {
+            int spent = 0;
 
-        // CatCraft: one results screen for the whole mass opening.
-        if (summary) {
-            List<Reward> won = this.plugin.getOpeningManager().stopCollecting(player);
-            if (!won.isEmpty()) {
-                new su.nightexpress.excellentcrates.opening.summary.MassOpenSummary(this.plugin, player, source.getCrate(), won).open();
+            @Override
+            public void run() {
+                boolean done = !player.isOnline();
+                for (int count = 0; count < perTick && !done; count++) {
+                    if (!openCrate(player, source, options, cost)) done = true;
+                    else if (++spent >= openings) done = true;
+                }
+                if (!done) return;
+
+                this.cancel();
+                su.nightexpress.excellentcrates.opening.summary.MassOpenSummary.markFinished(player);
+                if (!summary) return;
+                List<Reward> won = plugin.getOpeningManager().stopCollecting(player);
+                if (!won.isEmpty() && player.isOnline()) {
+                    new su.nightexpress.excellentcrates.opening.summary.MassOpenSummary(plugin, player, source.getCrate(), won).open();
+                }
             }
-        }
+        }.runTaskTimer(this.plugin, 0L, 1L);
     }
 
     private boolean testRestrictions(@NotNull Player player, @NotNull Crate crate) {

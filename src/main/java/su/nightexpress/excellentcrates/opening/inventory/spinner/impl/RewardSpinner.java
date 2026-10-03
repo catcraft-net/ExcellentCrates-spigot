@@ -127,6 +127,20 @@ public class RewardSpinner extends AbstractSpinner {
         return this.slots.length + enters;
     }
 
+    /**
+     * CatCraft: an instant opening (skip, /crates fast, mass opening) doesn't need the reel's display
+     * items: the rewards were rolled when the spinner was created. Jump to the end instead of building
+     * every filler item (custom items like ExecutableItems are expensive to build).
+     */
+    @Override
+    public void tickAll() {
+        if (!this.running) return;
+        this.spinCount = Math.max(this.spinCount, this.requiredSpins);
+        this.steps.clear();
+        this.currentStep = null;
+        this.rewardIndex = this.opening.getRewards().size();
+    }
+
     private boolean shouldUsePredictedReward(int slot) {
         if (this.rewardIndex >= this.opening.getRewards().size()) return false;
 

@@ -116,6 +116,28 @@ public final class MassOpenSummary implements InventoryHolder {
     }
 
     private static boolean guardRegistered;
+    private static final Map<java.util.UUID, Long> LAST_MASS_OPEN = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private static final java.util.Set<java.util.UUID> IN_PROGRESS = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    /** A mass opening started for this player (see {@link #isBusy}). */
+    public static void markStarted(@NotNull Player player) {
+        IN_PROGRESS.add(player.getUniqueId());
+    }
+
+    /** The player's mass opening finished (see {@link #isBusy}). */
+    public static void markFinished(@NotNull Player player) {
+        IN_PROGRESS.remove(player.getUniqueId());
+        LAST_MASS_OPEN.put(player.getUniqueId(), System.currentTimeMillis());
+    }
+
+    /** True during a mass opening, while its summary is open, or within 1 second after it. */
+    public static boolean isBusy(@NotNull Player player) {
+        if (IN_PROGRESS.contains(player.getUniqueId())) return true;
+        if (player.getOpenInventory().getTopInventory().getHolder() instanceof MassOpenSummary) return true;
+        Long last = LAST_MASS_OPEN.get(player.getUniqueId());
+        return last != null && System.currentTimeMillis() - last < 1000L;
+    }
 
     /** Registers the read-only guard once (managers are re-created on /crates reload). */
     public static void registerGuard(@NotNull CratesPlugin plugin) {
