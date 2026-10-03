@@ -25,6 +25,8 @@ public class RewardSpinner extends AbstractSpinner {
     private final Set<Rarity> rarities;
 
     private final java.util.Deque<Reward> showcase = new java.util.ArrayDeque<>(); // CatCraft
+    private int showcased;
+    private int showcaseTotal;
     private int rewardIndex;
 
     public RewardSpinner(@NotNull SpinnerData data, @NotNull InventoryOpening opening, @NotNull Set<Rarity> rarities) {
@@ -38,7 +40,8 @@ public class RewardSpinner extends AbstractSpinner {
             List<Reward> ultras = new java.util.ArrayList<>(opening.getCrate().getRewards(opening.getPlayer()));
             ultras.removeIf(reward -> !reward.isBroadcast() || !rarities.contains(reward.getRarity()));
             java.util.Collections.shuffle(ultras);
-            this.showcase.addAll(ultras);
+            this.showcase.addAll(ultras.subList(0, Math.min(3, ultras.size())));
+            this.showcaseTotal = this.showcase.size();
         }
         this.rewardIndex = opening.getRewards().size(); // Start from latest index after previous reward spinners added their rewards.
 
@@ -93,22 +96,35 @@ public class RewardSpinner extends AbstractSpinner {
     }
 
     /**
-     * CatCraft showcase: the crate's ultras pass through the reel in every spin, one every 3 moves,
-     * but only while they will scroll out again before the reel stops. They are never placed to land
-     * next to the win slot; the result and its neighbours stay random (no staged near-misses).
+     * CatCraft showcase: the crate's ultras pass through the reel in every spin as late as possible
+     * while staying honest. The last one enters so that it leaves the reel exactly when the real
+     * prize enters for the final creep (more ultras: 3 moves earlier each, up to 3), so they cross the
+     * spotlight at a readable speed but never sit next to the prize while it settles. The result and
+     * its neighbours stay random (no staged near-misses).
      */
     @NotNull
     private Reward showcaseOrRoll() {
         if (!this.showcase.isEmpty()) {
             int spinsLeft = Math.toIntExact(this.requiredSpins - this.spinCount);
-            if (spinsLeft <= this.slots.length) {
-                this.showcase.clear(); // Too late: it would still be on screen when the reel stops.
-            }
-            else if (this.spinCount % 3 == 1) {
+            // Insertion points, earliest first: latest + 3*(total-1), ..., latest + 3, latest.
+            int next = this.latestShowcaseSpin() + 3 * (this.showcaseTotal - 1 - this.showcased);
+            if (spinsLeft == next) {
+                this.showcased++;
                 return this.showcase.poll();
             }
         }
         return this.rollReward(true);
+    }
+
+    /** Spins left at which an item put in now leaves the reel just as the prize enters it. */
+    private int latestShowcaseSpin() {
+        int enters = Integer.MAX_VALUE;
+        for (int winSlot : this.winSlots) {
+            int index = Lists.indexOf(this.slots, winSlot);
+            if (index >= 0) enters = Math.min(enters, index + 1);
+        }
+        if (enters == Integer.MAX_VALUE) enters = 1;
+        return this.slots.length + enters;
     }
 
     private boolean shouldUsePredictedReward(int slot) {

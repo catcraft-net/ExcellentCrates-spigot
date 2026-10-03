@@ -44,11 +44,17 @@ public final class MassOpenSummary implements InventoryHolder {
         this.plugin = plugin;
         this.player = player;
 
-        Map<String, Entry> grouped = new LinkedHashMap<>();
-        for (Reward reward : rewards) {
-            grouped.merge(reward.getId(), new Entry(reward, 1), (a, b) -> new Entry(a.reward(), a.count() + 1));
+        // One slot per win (rows grow with the number of keys); only group when it can't fit.
+        if (rewards.size() <= 54) {
+            this.entries = new ArrayList<>(rewards.stream().map(reward -> new Entry(reward, 1)).toList());
         }
-        this.entries = new ArrayList<>(grouped.values());
+        else {
+            Map<String, Entry> grouped = new LinkedHashMap<>();
+            for (Reward reward : rewards) {
+                grouped.merge(reward.getId(), new Entry(reward, 1), (a, b) -> new Entry(a.reward(), a.count() + 1));
+            }
+            this.entries = new ArrayList<>(grouped.values());
+        }
         // Most likely first, rarest last; ultras (broadcast) after everything else.
         this.entries.sort(Comparator.comparing((Entry entry) -> entry.reward().isBroadcast())
             .thenComparing(entry -> -entry.reward().getRollChance()));
@@ -94,12 +100,14 @@ public final class MassOpenSummary implements InventoryHolder {
     @NotNull
     private static ItemStack icon(@NotNull Entry entry) {
         ItemStack item = entry.reward().getPreviewItem().clone();
-        item.setAmount(Math.clamp(entry.count(), 1, item.getMaxStackSize()));
+        if (entry.count() > 1) item.setAmount(Math.clamp(entry.count(), 1, item.getMaxStackSize()));
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             List<String> lore = meta.getLore() == null ? new ArrayList<>() : new ArrayList<>(meta.getLore());
-            lore.add("");
-            lore.add(NightMessage.asLegacy("<gray>Won " + entry.count() + "×</gray>"));
+            if (entry.count() > 1) {
+                lore.add("");
+                lore.add(NightMessage.asLegacy("<gray>Won " + entry.count() + "×</gray>"));
+            }
             meta.setLore(lore);
             if (entry.reward().isBroadcast()) meta.setEnchantmentGlintOverride(true);
             item.setItemMeta(meta);

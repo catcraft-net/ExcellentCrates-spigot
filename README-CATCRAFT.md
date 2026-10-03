@@ -10,15 +10,17 @@
 - **Crate themes.** Animation spinner items with `Theme: primary` or `Theme: secondary` are recoloured to
   the stained glass pane closest to the first/last hex colour in the crate's name gradient.
 - **Ultra showcase.** Reward spinners with `Showcase_Broadcast_Rewards: true` (SEQUENTAL mode) show the
-  crate's broadcast rewards passing through the reel in every spin, one every 3 moves, only while they
-  will scroll out before the reel stops. They are never placed next to the win slot.
+  crate's broadcast rewards (up to 3) passing through the reel in every spin, as late as possible while
+  honest: the last one leaves the reel exactly when the real prize enters for the final creep, the
+  others 3 moves earlier each. They cross at a readable speed and never sit next to the prize.
 - **Click to skip.** Clicking in an opening window skips the spin (while `Max_Ticks_To_Skip` allows), and
   clicking during the reveal/result closes it immediately.
 - **/crates fast** (permission `excellentcrates.command.fast`, default true) toggles a per-player
   preference to open crates without animations (stored on the player).
 - **Mass-open summary** (`Crate.MassOpening.Summary`, default true): one read-only results screen after a
-  mass opening. Wins fill in from most to least likely, grouped with counts, broadcast (ultra) rewards
-  last with a glint and the challenge sound. The per-opening result chat lines are skipped.
+  mass opening, one slot per win (rows grow with the keys used: 18 keys = 2 rows, up to 6 rows; wins are
+  only grouped beyond 54). Wins fill in from most to least likely, broadcast (ultra) rewards last with a
+  glint and the challenge sound. The per-opening result chat lines are skipped.
 - Tested on Paper 26.3 with bots (normal and ultra reveals, themes, showcase, click-skip, click-close,
   fast mode, 10-key mass opening).
 
