@@ -21,6 +21,9 @@
   item of the reel (the rewards are rolled up front); custom items made each one cost ~150 ms.
 - **Click to skip.** Clicking in an opening window skips the spin (while `Max_Ticks_To_Skip` allows), and
   clicking during the reveal/result closes it immediately.
+- **Skip hint** (`Openings.Skip_Hint`): players who skip After_Skips (3) openings within Within_Minutes (10)
+  get a title pop-up and a clickable chat tip to use /crates fast, at most once per Cooldown_Minutes (30).
+  Only for players who can use /crates fast and don't have it on.
 - **/crates fast** (permission `excellentcrates.command.fast`, default true) toggles a per-player
   preference to open crates without animations (stored on the player).
 - **Mass openings go through one server-wide queue**: at most `Crate.MassOpening.Global_Per_Tick` (12)

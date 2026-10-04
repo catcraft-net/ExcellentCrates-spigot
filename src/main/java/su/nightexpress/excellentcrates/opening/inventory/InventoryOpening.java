@@ -80,6 +80,7 @@ public class InventoryOpening extends AbstractOpening {
         else if (this.canSkip()) {
             this.skipQueued = true;
             this.plugin.runTask(this::instaRoll);
+            su.nightexpress.excellentcrates.opening.SkipHint.recordSkip(this.plugin, this.player);
         }
     }
 

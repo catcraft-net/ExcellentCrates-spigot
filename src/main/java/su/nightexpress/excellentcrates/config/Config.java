@@ -226,6 +226,27 @@ public class Config {
         "[CatCraft] The longest the summary stays open after filling."
     );
 
+    public static final ConfigValue<Boolean> SKIP_HINT_ENABLED = ConfigValue.create("Openings.Skip_Hint.Enabled",
+        true,
+        "[CatCraft] Players who keep skipping opening animations get a tip to use /crates fast",
+        "(title pop-up + clickable chat line). Only for players who can use /crates fast and don't have it on."
+    );
+
+    public static final ConfigValue<Integer> SKIP_HINT_AFTER_SKIPS = ConfigValue.create("Openings.Skip_Hint.After_Skips",
+        3,
+        "[CatCraft] Show the tip after this many skips..."
+    );
+
+    public static final ConfigValue<Integer> SKIP_HINT_WITHIN_MINUTES = ConfigValue.create("Openings.Skip_Hint.Within_Minutes",
+        10,
+        "[CatCraft] ...within this many minutes."
+    );
+
+    public static final ConfigValue<Integer> SKIP_HINT_COOLDOWN_MINUTES = ConfigValue.create("Openings.Skip_Hint.Cooldown_Minutes",
+        30,
+        "[CatCraft] Don't show the tip to the same player again for this many minutes."
+    );
+
     public static final ConfigValue<Integer> MASS_OPENING_GLOBAL_PER_TICK = ConfigValue.create("Crate.MassOpening.Global_Per_Tick",
         12,
         "[CatCraft] The most crates all Mass Openings together may open per server tick (players take turns),",
