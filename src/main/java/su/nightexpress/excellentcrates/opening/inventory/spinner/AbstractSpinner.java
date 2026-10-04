@@ -33,6 +33,8 @@ public abstract class AbstractSpinner implements Spinner {
     protected long spinCount;
     protected long spinDelay;
 
+    private boolean loopFilled; // CatCraft: LOOP mode
+
     public AbstractSpinner(@NotNull SpinnerData data, @NotNull InventoryOpening opening) {
         this.data = data;
         this.opening = opening;
@@ -138,6 +140,7 @@ public abstract class AbstractSpinner implements Spinner {
             case INDEPENDENT -> this.spinIndependent();
             case SYNCRHONIZED -> this.spinSynchronized();
             case RANDOM -> this.spinRandom();
+            case LOOP -> this.spinLoop();
         }
 
         this.stepCount++;
@@ -170,6 +173,34 @@ public abstract class AbstractSpinner implements Spinner {
                 this.inventory.setItem(slot, this.inventory.getItem(previousSlot));
             }
         }
+    }
+
+    /**
+     * CatCraft: a real wheel. The first spin fills every slot; after that the items rotate one slot along
+     * the list per spin and the last slot's item wraps round to the first, so nothing new ever enters.
+     */
+    protected void spinLoop() {
+        if (!this.loopFilled) {
+            this.loopFilled = true;
+            for (int slot : this.slots) {
+                if (this.isOutOfBounds(slot)) continue;
+                this.inventory.setItem(slot, this.createItem(slot));
+            }
+            return;
+        }
+
+        int lastSlot = this.slots[this.slots.length - 1];
+        ItemStack last = this.isOutOfBounds(lastSlot) ? null : this.inventory.getItem(lastSlot);
+        ItemStack wrapped = last == null ? null : last.clone();
+
+        for (int index = this.slots.length - 1; index > 0; index--) {
+            int slot = this.slots[index];
+            if (this.isOutOfBounds(slot)) continue;
+
+            int previousSlot = this.slots[index - 1];
+            this.inventory.setItem(slot, this.isOutOfBounds(previousSlot) ? null : this.inventory.getItem(previousSlot));
+        }
+        if (!this.isOutOfBounds(this.slots[0])) this.inventory.setItem(this.slots[0], wrapped);
     }
 
     protected void spinIndependent() {

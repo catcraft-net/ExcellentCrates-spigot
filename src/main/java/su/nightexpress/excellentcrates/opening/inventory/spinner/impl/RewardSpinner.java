@@ -28,6 +28,9 @@ public class RewardSpinner extends AbstractSpinner {
     private int showcased;
     private int showcaseTotal;
     private int rewardIndex;
+    // CatCraft LOOP mode: list index -> what the fill puts there (the prize, or a showcased ultra).
+    private final Map<Integer, Integer> loopPrizes = new HashMap<>();
+    private final Map<Integer, Reward> loopShowcase = new HashMap<>();
 
     public RewardSpinner(@NotNull SpinnerData data, @NotNull InventoryOpening opening, @NotNull Set<Rarity> rarities) {
         this(data, opening, rarities, false);
@@ -50,6 +53,63 @@ public class RewardSpinner extends AbstractSpinner {
         this.rewardIndex = opening.getRewards().size(); // Start from latest index after previous reward spinners added their rewards.
 
         this.prepareRewards();
+        if (data.getMode() == SpinMode.LOOP) this.planLoop(showcase);
+    }
+
+    /**
+     * CatCraft: a LOOP spinner never takes in new items after its first spin, so the prize is put on the
+     * wheel up front at the spot that rotates onto the win slot on the last spin. Showcased ultras are put
+     * where they will stop as far from the win slot as possible (spread out), so they sweep past the pointer
+     * while it spins but are never next to the prize when it stops.
+     */
+    private void planLoop(boolean showcase) {
+        int size = this.slots.length;
+        int rotations = Math.max(0, this.requiredSpins - 1); // The first spin fills.
+        int prize = this.rewardIndex;
+        for (int winSlot : this.winSlots) {
+            int index = Lists.indexOf(this.slots, winSlot);
+            if (index >= 0) this.loopPrizes.put(Math.floorMod(index - rotations, size), prize++);
+        }
+        if (!showcase) return;
+
+        List<Reward> ultras = new java.util.ArrayList<>(this.opening.getCrate().getRewards(this.opening.getPlayer()));
+        ultras.removeIf(reward -> !reward.isBroadcast() || !this.rarities.contains(reward.getRarity()));
+        if (ultras.isEmpty()) return;
+        java.util.Collections.shuffle(ultras);
+
+        List<Integer> candidates = new java.util.ArrayList<>();
+        for (int index = 0; index < size; index++) {
+            if (!this.loopPrizes.containsKey(index)) candidates.add(index);
+        }
+        Map<Integer, Double> distance = new HashMap<>();
+        candidates.forEach(index -> distance.put(index, this.distanceFromWin(this.slots[(index + rotations) % size])));
+        candidates.sort((a, b) -> Double.compare(distance.get(b), distance.get(a)));
+        // Only the far part of the wheel: within a quarter of the furthest distance from the win slot.
+        double far = candidates.isEmpty() ? 0 : distance.get(candidates.getFirst()) * 0.75;
+        candidates.removeIf(index -> distance.get(index) < far);
+
+        List<Integer> picked = new java.util.ArrayList<>();
+        for (int index : candidates) {
+            if (picked.size() >= Math.min(3, ultras.size())) break;
+            boolean spaced = picked.stream().allMatch(other -> {
+                int gap = Math.abs(other - index);
+                return Math.min(gap, size - gap) >= 3;
+            });
+            boolean clear = this.loopPrizes.keySet().stream().allMatch(other -> {
+                int gap = Math.abs(other - index);
+                return Math.min(gap, size - gap) >= 3;
+            });
+            if (spaced && clear) picked.add(index);
+        }
+        for (int i = 0; i < picked.size(); i++) this.loopShowcase.put(picked.get(i), ultras.get(i));
+    }
+
+    private double distanceFromWin(int slot) {
+        double best = Double.MAX_VALUE;
+        for (int winSlot : this.winSlots) {
+            best = Math.min(best, Math.hypot(slot / 9 - winSlot / 9, slot % 9 - winSlot % 9));
+        }
+        return best == Double.MAX_VALUE ? 0 : best;
     }
 
     private boolean isWinSlot(int slot) {
@@ -93,6 +153,14 @@ public class RewardSpinner extends AbstractSpinner {
     @Override
     @NotNull
     public ItemStack createItem(int slot) {
+        if (this.data.getMode() == SpinMode.LOOP && slot >= 0) {
+            int index = Lists.indexOf(this.slots, slot);
+            Integer prize = this.loopPrizes.get(index);
+            Reward reward = prize != null && prize < this.opening.getRewards().size() ? this.opening.getRewards().get(prize)
+                : this.loopShowcase.getOrDefault(index, null);
+            if (reward == null) reward = this.rollReward(true);
+            return preview(reward);
+        }
         Reward reward = this.shouldUsePredictedReward(slot) ? this.opening.getRewards().get(this.rewardIndex++) : this.showcaseOrRoll();
         if (reward == null) return new ItemStack(Material.AIR);
 
