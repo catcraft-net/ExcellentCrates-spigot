@@ -41,7 +41,10 @@ public class RewardSpinner extends AbstractSpinner {
             List<Reward> ultras = new java.util.ArrayList<>(opening.getCrate().getRewards(opening.getPlayer()));
             ultras.removeIf(reward -> !reward.isBroadcast() || !rarities.contains(reward.getRarity()));
             java.util.Collections.shuffle(ultras);
-            this.showcase.addAll(ultras.subList(0, Math.min(3, ultras.size())));
+            // As many as fit: the first must enter at least 3*(n-1) moves before the latest point.
+            int room = this.requiredSpins - this.latestShowcaseSpin();
+            int fit = room < 0 ? 0 : Math.min(3, room / 3 + 1);
+            this.showcase.addAll(ultras.subList(0, Math.min(fit, ultras.size())));
             this.showcaseTotal = this.showcase.size();
         }
         this.rewardIndex = opening.getRewards().size(); // Start from latest index after previous reward spinners added their rewards.
