@@ -1,3 +1,17 @@
+# CatCraft 6.6.1-catcraft.7 (Paper 26.3)
+
+## Changes in .7: faster /crates reload
+
+With 108 crates (~4,500 items), `/crates reload` froze the server for 5.2 s. It now takes about 1.2 s (same test server).
+- Loading a crate or key no longer rewrites its file unless loading actually changed it (an old format converted or a
+  missing option added). Before, every reload re-serialised and rewrote all 107 crate and 102 key files.
+- The item-data upgrade only re-checks files that changed since it last checked them this server session.
+- Decoded vanilla items are reused across reloads when their stored data is unchanged (`DecodedItemCache`); they are
+  immutable, and entries the latest load didn't use are dropped.
+- The "?" placeholder preview each reward starts with is built once per load instead of once (or twice) per reward.
+- Tested on Paper 26.3 with the Local Server's crate folder: reload 5,179 ms -> 1,247 ms max tick, 0 files rewritten,
+  all 108 crates loaded, and openings after the reload gave exactly the shown reward.
+
 # CatCraft 6.6.1-catcraft.6 (Paper 26.3)
 
 ## Changes in .6
