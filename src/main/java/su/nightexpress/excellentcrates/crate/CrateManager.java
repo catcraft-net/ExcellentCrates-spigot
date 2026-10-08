@@ -74,6 +74,7 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
     private final Map<String, PreviewMenu> previewByIdMap;
     private final Map<UUID, Long>          previewCooldown;
     private final Set<String> warnedKeyConfigurations = new HashSet<>();
+    private final MassOpenQueue massOpenQueue = new MassOpenQueue(this.plugin, this); // CatCraft
 
     private OpeningCostMenu   costMenu;
     private OpeningAmountMenu amountMenu;
@@ -109,6 +110,7 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
 
     @Override
     protected void onShutdown() {
+        this.massOpenQueue.shutdown();
         this.warnedKeyConfigurations.clear();
         this.saveCrates();
 
@@ -481,6 +483,10 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
     public void preOpenCrate(@NotNull Player player, @NotNull CrateSource source) {
         Crate crate = source.getCrate();
 
+        // CatCraft: ignore crate clicks while a mass-open summary is showing, and for a second after a
+        // mass opening (held right-clicks would otherwise start another one and close the summary).
+        if (su.nightexpress.excellentcrates.opening.summary.MassOpenSummary.isBusy(player)) return;
+
         // Check if it's possible for a player to open crates.
         if (!this.testRestrictions(player, crate)) {
             this.pushback(player, source);
@@ -529,11 +535,13 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
             options.with(OpenOptions.Option.IGNORE_ANIMATION);
         }
 
-        for (int spent = 0; spent < openings; spent++) {
-            if (!this.openCrate(player, source, options, cost)) {
-                break;
-            }
+        if (openings <= 1) {
+            this.openCrate(player, source, options, cost);
+            return;
         }
+
+        // CatCraft: queue it; the server-wide queue opens a few per tick, taking turns between players.
+        this.massOpenQueue.submit(player, source, options, cost, openings);
     }
 
     private boolean testRestrictions(@NotNull Player player, @NotNull Crate crate) {
@@ -650,7 +658,8 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
         }
 
         // Instant openings can award rewards synchronously, so payment must precede startOpening.
-        this.plugin.getOpeningManager().startOpening(player, opening, options.has(OpenOptions.Option.IGNORE_ANIMATION));
+        boolean instant = options.has(OpenOptions.Option.IGNORE_ANIMATION) || su.nightexpress.excellentcrates.opening.FastOpen.isEnabled(this.plugin, player); // CatCraft: /crates fast
+        this.plugin.getOpeningManager().startOpening(player, opening, instant);
 
         return true;
     }

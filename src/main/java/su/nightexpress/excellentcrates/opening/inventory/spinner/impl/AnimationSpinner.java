@@ -16,10 +16,17 @@ import java.util.List;
 public class AnimationSpinner extends AbstractSpinner {
 
     private final List<WeightedItem<NightItem>> items;
+    private final java.util.Map<NightItem, String> themeByItem;
 
     public AnimationSpinner(@NotNull SpinnerData data, @NotNull InventoryOpening opening, @NotNull List<WeightedItem<NightItem>> items) {
+        this(data, opening, items, java.util.Map.of());
+    }
+
+    public AnimationSpinner(@NotNull SpinnerData data, @NotNull InventoryOpening opening, @NotNull List<WeightedItem<NightItem>> items,
+                            @NotNull java.util.Map<NightItem, String> themeByItem) {
         super(data, opening);
         this.items = items;
+        this.themeByItem = themeByItem;
     }
 
     @Override
@@ -30,6 +37,12 @@ public class AnimationSpinner extends AbstractSpinner {
     @Override
     @NotNull
     public ItemStack createItem(int slot) {
-        return this.items.isEmpty() ? new ItemStack(Material.AIR) : Rnd.getByWeight(new ArrayList<>(this.items)).getItemStack();
+        if (this.items.isEmpty()) return new ItemStack(Material.AIR);
+        NightItem item = Rnd.getByWeight(new ArrayList<>(this.items));
+        ItemStack stack = item.getItemStack();
+        // CatCraft: "Theme: primary/secondary" items take the crate's own colours.
+        Material pane = this.opening.getTheme().pane(this.themeByItem.get(item));
+        if (pane != null) stack.setType(pane);
+        return stack;
     }
 }

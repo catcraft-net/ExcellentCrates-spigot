@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class InventoryProvider extends AbstractProvider {
+    private final java.util.List<su.nightexpress.excellentcrates.opening.inventory.reveal.Reveal> reveals = new java.util.ArrayList<>(); // CatCraft
 
     private MenuType invType  = MenuType.GENERIC_9X3;
     private String   invTitle = "Crate opening...";
@@ -123,6 +124,38 @@ public class InventoryProvider extends AbstractProvider {
                 this.addSpinner(holder);
             });
         }
+
+        // CatCraft: Settings.Reveals.<id> - animation spinners started when the reward spinners stop,
+        // chosen by what was won (first matching reveal, in config order).
+        this.reveals.clear();
+        config.getSection("Settings.Reveals").forEach(revealId -> {
+            String path = "Settings.Reveals." + revealId;
+            Boolean broadcast = config.contains(path + ".Match.Broadcast") ? config.getBoolean(path + ".Match.Broadcast") : null;
+            double maxChance = config.getDouble(path + ".Match.Max_Chance", 0D);
+            String loreContains = config.getString(path + ".Match.Lore_Contains");
+            java.util.Set<String> rewardIds = new java.util.HashSet<>();
+            config.getStringList(path + ".Match.Reward_Ids").forEach(id -> rewardIds.add(id.toLowerCase()));
+
+            java.util.List<SpinnerHolder> holders = new java.util.ArrayList<>();
+            config.getSection(path + ".ANIMATION").forEach(sId -> {
+                SpinnerData data = SpinnerData.read(config, path + ".ANIMATION." + sId);
+                if (data == null) return;
+                String providerPath = providersPath + "." + SpinnerType.ANIMATION.name() + "." + data.getSpinnerId();
+                if (!config.contains(providerPath)) {
+                    this.plugin.error("Spinner '" + data.getSpinnerId() + "' not present in '" + config.getFile().getPath() + "' for reveal '" + revealId + "'.");
+                    return;
+                }
+                holders.add(new SpinnerHolder(sId, SpinnerType.ANIMATION, data, AnimationProvider.read(config, providerPath)));
+            });
+            // Same "name;volume;pitch" parser as spinner sounds.
+            java.util.List<su.nightexpress.nightcore.bridge.wrap.NightSound> skipSounds = new java.util.ArrayList<>();
+            config.getStringList(path + ".Skip_Sounds").forEach(raw -> {
+                su.nightexpress.nightcore.bridge.wrap.NightSound sound = su.nightexpress.nightcore.util.sound.AbstractSound.deserialize(raw);
+                if (sound != null) skipSounds.add(sound);
+            });
+            this.reveals.add(new su.nightexpress.excellentcrates.opening.inventory.reveal.Reveal(
+                revealId.toLowerCase(), broadcast, maxChance, loreContains, rewardIds, holders, skipSounds));
+        });
     }
 
     @Override
@@ -153,6 +186,11 @@ public class InventoryProvider extends AbstractProvider {
 
     public void setInvTitle(@NotNull String invTitle) {
         this.invTitle = invTitle;
+    }
+
+    @NotNull
+    public java.util.List<su.nightexpress.excellentcrates.opening.inventory.reveal.Reveal> getReveals() {
+        return this.reveals;
     }
 
     public int[] getWinSlots() {

@@ -75,6 +75,7 @@ public class CratesPlugin extends NightPlugin {
 
     @Override
     public void enable() {
+        su.nightexpress.excellentcrates.util.DecodedItemCache.beginLoad();
         ItemDataUpgrade.run(this);
         this.crateLogger = new CrateLogger(this);
         this.dialogRegistry = new DialogRegistry(this);
@@ -120,6 +121,7 @@ public class CratesPlugin extends NightPlugin {
 
         this.loadCommands();
         this.proceedAddons(CratesAddon::onLoad);
+        su.nightexpress.excellentcrates.util.DecodedItemCache.endLoad();
     }
 
     @Override

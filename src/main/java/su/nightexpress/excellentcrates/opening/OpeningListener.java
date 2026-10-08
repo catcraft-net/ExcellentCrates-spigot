@@ -25,6 +25,7 @@ public class OpeningListener extends AbstractListener<CratesPlugin> {
     @EventHandler(priority = EventPriority.NORMAL)
     public void onQuit(PlayerQuitEvent event) {
         this.manager.stopOpening(event.getPlayer());
+        SkipHint.forget(event.getPlayer().getUniqueId()); // CatCraft
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
@@ -45,6 +46,7 @@ public class OpeningListener extends AbstractListener<CratesPlugin> {
         if (inventoryOpening.isLaunched() && !opening.isCompleted()) {
             if (inventoryOpening.canSkip()) {
                 opening.instaRoll();
+                SkipHint.recordSkip(this.plugin, player); // CatCraft
             }
 //            else  {
 //                inventoryOpening.setPopupNextTick(true);

@@ -198,6 +198,66 @@ public class Config {
         "Controls whether players can do Mass Opening by opening crates while sneaking."
     );
 
+    public static final ConfigValue<Boolean> MASS_OPENING_SUMMARY = ConfigValue.create("Crate.MassOpening.Summary",
+        true,
+        "[CatCraft] Shows one results screen after a Mass Opening (wins fill in from most common to rarest,",
+        "ultras last with a fanfare) instead of a result message per opening."
+    );
+
+    public static final ConfigValue<Double> MASS_OPENING_SUMMARY_CLOSE_BASE = ConfigValue.create("Crate.MassOpening.Summary_Close.Base_Seconds",
+        3D,
+        "[CatCraft] The summary closes by itself this long after it finishes filling, plus Per_Item_Seconds",
+        "for each win shown, plus Ultra_Seconds if an ultra (broadcast reward) was won, up to Max_Seconds.",
+        "Set Base_Seconds and Per_Item_Seconds to 0 to keep it open until the player closes it."
+    );
+
+    public static final ConfigValue<Double> MASS_OPENING_SUMMARY_CLOSE_PER_ITEM = ConfigValue.create("Crate.MassOpening.Summary_Close.Per_Item_Seconds",
+        0.15D,
+        "[CatCraft] Extra seconds per win shown in the summary."
+    );
+
+    public static final ConfigValue<Double> MASS_OPENING_SUMMARY_CLOSE_ULTRA = ConfigValue.create("Crate.MassOpening.Summary_Close.Ultra_Seconds",
+        2D,
+        "[CatCraft] Extra seconds when the summary shows an ultra (broadcast reward)."
+    );
+
+    public static final ConfigValue<Double> MASS_OPENING_SUMMARY_CLOSE_MAX = ConfigValue.create("Crate.MassOpening.Summary_Close.Max_Seconds",
+        10D,
+        "[CatCraft] The longest the summary stays open after filling."
+    );
+
+    public static final ConfigValue<Boolean> SKIP_HINT_ENABLED = ConfigValue.create("Openings.Skip_Hint.Enabled",
+        true,
+        "[CatCraft] Players who keep skipping opening animations get a tip to use /crates fast",
+        "(title pop-up + clickable chat line). Only for players who can use /crates fast and don't have it on."
+    );
+
+    public static final ConfigValue<Integer> SKIP_HINT_AFTER_SKIPS = ConfigValue.create("Openings.Skip_Hint.After_Skips",
+        3,
+        "[CatCraft] Show the tip after this many skips..."
+    );
+
+    public static final ConfigValue<Integer> SKIP_HINT_WITHIN_MINUTES = ConfigValue.create("Openings.Skip_Hint.Within_Minutes",
+        10,
+        "[CatCraft] ...within this many minutes."
+    );
+
+    public static final ConfigValue<Integer> SKIP_HINT_COOLDOWN_MINUTES = ConfigValue.create("Openings.Skip_Hint.Cooldown_Minutes",
+        30,
+        "[CatCraft] Don't show the tip to the same player again for this many minutes."
+    );
+
+    public static final ConfigValue<Integer> MASS_OPENING_GLOBAL_PER_TICK = ConfigValue.create("Crate.MassOpening.Global_Per_Tick",
+        12,
+        "[CatCraft] The most crates all Mass Openings together may open per server tick (players take turns),",
+        "so many players mass-opening at once can't cause a lag spike."
+    );
+
+    public static final ConfigValue<Integer> MASS_OPENING_PER_TICK = ConfigValue.create("Crate.MassOpening.Per_Tick",
+        3,
+        "[CatCraft] How many crates a Mass Opening opens per server tick. Lower = smoother TPS, slower result."
+    );
+
     public static final ConfigValue<Integer> MASS_OPENING_LIMIT = ConfigValue.create("Crate.Mass_Opening_Limit",
         30,
         "Limits amount of crate openings for the Mass Opening feature to this value.",

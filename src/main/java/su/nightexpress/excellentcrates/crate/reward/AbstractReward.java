@@ -43,7 +43,7 @@ public abstract class AbstractReward implements Reward {
 
         this.setWeight(10D);
         this.setRarity(rarity);
-        this.setPreview(ItemHelper.vanilla(CrateUtils.getQuestionStack()));
+        this.setPreview(su.nightexpress.excellentcrates.util.DecodedItemCache.question()); // CatCraft: built once per load
         this.setBroadcast(false);
         this.setLimits(LimitValues.unlimited());
         this.setIgnoredPermissions(new HashSet<>());
