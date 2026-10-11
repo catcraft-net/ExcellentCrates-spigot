@@ -164,6 +164,11 @@ public class InventoryOpening extends AbstractOpening {
         return this.isSpinnersCompleted() && this.closeTicks <= 0;
     }
 
+    /** CatCraft: every spinner (including reveals) has stopped and only the completion pause is left. */
+    public boolean isResultShowing() {
+        return this.isSpinnersCompleted();
+    }
+
     private boolean isSpinnersCompleted() {
         return !this.spinners.isEmpty() && this.spinners.stream().allMatch(spinner -> spinner.hasSpin() && (!spinner.isRunning() || spinner.isCompleted()));
     }

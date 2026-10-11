@@ -73,6 +73,7 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
     private final Map<WorldPos, Crate>     crateByPosMap;
     private final Map<String, PreviewMenu> previewByIdMap;
     private final Map<UUID, Long>          previewCooldown;
+    private final Map<UUID, Long>          alreadyOpeningNotified = new HashMap<>(); // CatCraft
     private final Set<String> warnedKeyConfigurations = new HashSet<>();
     private final MassOpenQueue massOpenQueue = new MassOpenQueue(this.plugin, this); // CatCraft
 
@@ -553,7 +554,13 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
 
         // Check if player is in other opening or if crate block is occupied by others.
         if (!this.plugin.getOpeningManager().isOpeningAvailable(player)) {
-            Lang.CRATE_OPEN_ERROR_ALREADY.message().send(player);
+            // CatCraft: held or repeated clicks would send this once per click; show it at most every 2 seconds.
+            long now = System.currentTimeMillis();
+            Long last = this.alreadyOpeningNotified.get(player.getUniqueId());
+            if (last == null || now - last >= 2000L) {
+                this.alreadyOpeningNotified.put(player.getUniqueId(), now);
+                Lang.CRATE_OPEN_ERROR_ALREADY.message().send(player);
+            }
             return false;
         }
 
@@ -779,6 +786,11 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
 
     public void removePreviewCooldown(@NotNull Player player) {
         this.previewCooldown.remove(player.getUniqueId());
+    }
+
+    /** CatCraft: forget when this player was last told "already opening" (on quit). */
+    public void forgetAlreadyOpeningNotice(@NotNull Player player) {
+        this.alreadyOpeningNotified.remove(player.getUniqueId());
     }
 
     public void playCrateEffects() {

@@ -43,6 +43,15 @@ public class OpeningListener extends AbstractListener<CratesPlugin> {
         Opening opening = this.manager.getOpening(player);
         if (!(opening instanceof InventoryOpening inventoryOpening)) return;
 
+        // CatCraft: closing the window while the result is showing finishes the opening now. Before, it
+        // stayed active (invisible) until the completion pause ran out, so clicking a crate straight
+        // after said "You're already opening a crate!".
+        if (inventoryOpening.isLaunched() && inventoryOpening.isResultShowing()) {
+            inventoryOpening.setCloseTicks(0);
+            opening.stop();
+            return;
+        }
+
         if (inventoryOpening.isLaunched() && !opening.isCompleted()) {
             if (inventoryOpening.canSkip()) {
                 opening.instaRoll();

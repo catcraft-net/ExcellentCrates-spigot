@@ -1,3 +1,13 @@
+# CatCraft 6.6.1-catcraft.8 (Paper 26.3)
+
+## Changes in .8: "already opening" fixes
+
+- Closing an inventory opening while the result is showing (the completion pause) now finishes the opening at once.
+  Before, the opening stayed active, unseen, until the pause ran out, so clicking a crate straight after said
+  "You're already opening a crate!".
+- The "already opening" message is shown at most once every 2 seconds per player (held/repeated clicks sent it
+  once per click).
+
 # CatCraft 6.6.1-catcraft.7 (Paper 26.3)
 
 ## Changes in .7: faster /crates reload
