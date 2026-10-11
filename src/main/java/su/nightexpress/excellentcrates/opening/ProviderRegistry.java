@@ -23,6 +23,7 @@ public class ProviderRegistry {
         ProviderRegistry.registerLoader(Config.DIR_OPENINGS_INVENTORY, InventoryProvider::new);
         ProviderRegistry.registerLoader(Config.DIR_OPENINGS_SIMPLE_ROLL, SimpleRollProvider::new);
         ProviderRegistry.registerLoader(Config.DIR_OPENINGS_SELECTABLE, SelectableProvider::new);
+        ProviderRegistry.registerLoader(Config.DIR_OPENINGS_RANDOM, su.nightexpress.excellentcrates.opening.random.RandomProvider::new); // CatCraft
     }
 
     public static void clear() {

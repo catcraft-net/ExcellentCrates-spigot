@@ -1,3 +1,22 @@
+# CatCraft 6.6.1-catcraft.9 (Paper 26.3)
+
+## Changes in .9: random opening groups
+
+- A file in `openings/random/` is a **random opening group**: a crate whose `Animation.Id` names the group plays one
+  of the listed openings, picked by weight every time it opens (normal, skipped, `/crates fast` and mass openings).
+  ```yaml
+  # openings/random/disco2.yml  ->  Animation.Id: disco2
+  Openings:
+    disco2_1: 22   # opening id: weight
+    disco2_2: 18
+  ```
+  Members are looked up when the crate opens, so they can be in any openings folder and a reload picks up changes.
+  Unknown ids, zero weights and other random groups are skipped; if none is left the crate opens without an
+  animation (like a missing opening). Without an `openings/random/` folder nothing changes.
+- Used by the "Disco 2" opening: five timelines with 0 to 2 false finishes (the lights go out, then the party kicks
+  back in), so players can't tell which lights-out will land the prize. Each timeline is an ordinary inventory
+  opening; the prize is still rolled up front and only enters the reel on the final approach.
+
 # CatCraft 6.6.1-catcraft.8 (Paper 26.3)
 
 ## Changes in .8: "already opening" fixes

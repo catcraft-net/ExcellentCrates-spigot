@@ -30,6 +30,7 @@ public class Config {
     public static final String DIR_OPENINGS_INVENTORY   = DIR_OPENINGS + "inventory/";
     public static final String DIR_OPENINGS_SELECTABLE  = DIR_OPENINGS + "selectable/";
     public static final String DIR_OPENINGS_SIMPLE_ROLL = DIR_OPENINGS + "simple_roll/";
+    public static final String DIR_OPENINGS_RANDOM      = DIR_OPENINGS + "random/"; // CatCraft: random opening groups
 
     public static final String FILE_MILESTONES = "milestones.yml";
     public static final String FILE_LOGS       = "openings.log";
