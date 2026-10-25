@@ -17,6 +17,7 @@ They use a fixed eldritch palette (no `Theme:`), so they look the same on any cr
 
 Decoration stays calm: no RANDOM flicker or mixed-item spinners, only one item moving in order (the generator
 refuses anything else).
+
 All three show the crate's ultras mid-spin, have `ultra` (`Broadcast: true`) and `normal` reveals with
 `Skip_Sounds`, and allow skipping until the reel stops. Tested on Paper 26.3 with the catcraft.6 jar and a
 real 26.3 client: every recorded opening and a click-skip gave exactly one reward, the one shown in the prize slot.
