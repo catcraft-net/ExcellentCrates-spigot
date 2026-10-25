@@ -153,7 +153,7 @@ public final class MassOpenSummary implements InventoryHolder {
     /** True during a mass opening, while its summary is open, or within 1 second after it. */
     public static boolean isBusy(@NotNull Player player) {
         if (IN_PROGRESS.contains(player.getUniqueId())) return true;
-        if (player.getOpenInventory().getTopInventory().getHolder() instanceof MassOpenSummary) return true;
+        if (player.getOpenInventory().getTopInventory().getHolder(false) instanceof MassOpenSummary) return true;
         Long last = LAST_MASS_OPEN.get(player.getUniqueId());
         if (last == null) return false;
         if (System.currentTimeMillis() - last < 1000L) return true;
@@ -172,12 +172,12 @@ public final class MassOpenSummary implements InventoryHolder {
     public static final class Guard implements Listener {
         @EventHandler
         public void onClick(InventoryClickEvent event) {
-            if (event.getInventory().getHolder() instanceof MassOpenSummary) event.setCancelled(true);
+            if (event.getInventory().getHolder(false) instanceof MassOpenSummary) event.setCancelled(true);
         }
 
         @EventHandler
         public void onDrag(InventoryDragEvent event) {
-            if (event.getInventory().getHolder() instanceof MassOpenSummary) event.setCancelled(true);
+            if (event.getInventory().getHolder(false) instanceof MassOpenSummary) event.setCancelled(true);
         }
 
         @EventHandler
