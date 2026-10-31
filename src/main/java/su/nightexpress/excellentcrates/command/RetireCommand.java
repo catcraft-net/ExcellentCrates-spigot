@@ -63,6 +63,38 @@ public class RetireCommand {
                 .executes(this::retire)
             )
         );
+
+        // CatCraft: pick a crate's opening from the full list (tab-completes every loaded opening), live.
+        nodeBuilder.branch(Commands.literal("opening")
+            .description("Set the opening animation a crate uses.")
+            .permission(Perms.COMMAND_RETIRE)
+            .withArguments(
+                Commands.argument(NEW_CRATE, (context, string) -> this.crate(string)).suggestions((reader, context) -> plugin.getCrateManager().getCrateIds()),
+                Commands.argument("opening", (context, string) -> {
+                    if (!string.equalsIgnoreCase("none") && plugin.getOpeningManager().getProviderById(string) == null)
+                        throw su.nightexpress.nightcore.commands.exceptions.CommandSyntaxException.custom(su.nightexpress.excellentcrates.config.Lang.ERROR_COMMAND_INVALID_CRATE_ARGUMENT);
+                    return string;
+                }).suggestions((reader, context) -> {
+                    List<String> ids = new ArrayList<>(plugin.getOpeningManager().getProviderIds());
+                    java.util.Collections.sort(ids);
+                    ids.add(0, "none");
+                    return ids;
+                })
+            )
+            .executes((context, arguments) -> {
+                Crate crate = arguments.get(NEW_CRATE, Crate.class);
+                String opening = arguments.get("opening", String.class);
+                if (opening.equalsIgnoreCase("none")) {
+                    crate.setOpeningEnabled(false);
+                } else {
+                    crate.setOpeningId(opening);
+                    crate.setOpeningEnabled(true);
+                }
+                crate.saveForce();
+                context.getSender().sendMessage("§a" + crate.getId() + " §7now opens with §f" + (opening.equalsIgnoreCase("none") ? "no animation" : opening) + "§7.");
+                return true;
+            })
+        );
     }
 
     @NotNull
