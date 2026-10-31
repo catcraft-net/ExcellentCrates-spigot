@@ -13,10 +13,16 @@ public class SpinStep {
 
     private final int spinsAmount;
     private final int tickInterval;
+    private final int burst; // CatCraft: spins per spin time (e.g. 2 = two slots per tick)
 
     public SpinStep(int spinsAmount, int tickInterval) {
+        this(spinsAmount, tickInterval, 1);
+    }
+
+    public SpinStep(int spinsAmount, int tickInterval, int burst) {
         this.spinsAmount = spinsAmount;
         this.tickInterval = tickInterval;
+        this.burst = Math.max(1, burst);
     }
 
     @NotNull
@@ -29,13 +35,14 @@ public class SpinStep {
         String[] split = str.split(DELIMITER);
         int amount = NumberUtil.getIntegerAbs(split[0]);
         int tickInterval = split.length >= 2 ? NumberUtil.getIntegerAbs(split[1]) : 0;
+        int burst = split.length >= 3 ? NumberUtil.getIntegerAbs(split[2]) : 1; // CatCraft: "amount:interval:burst"
 
-        return new SpinStep(amount, tickInterval);
+        return new SpinStep(amount, tickInterval, burst);
     }
 
     @NotNull
     public String serialize() {
-        return this.spinsAmount + DELIMITER + this.tickInterval;
+        return this.spinsAmount + DELIMITER + this.tickInterval + (this.burst > 1 ? DELIMITER + this.burst : "");
     }
 
     @NotNull
@@ -62,6 +69,10 @@ public class SpinStep {
 
     public int getSpinsAmount() {
         return this.spinsAmount;
+    }
+
+    public int getBurst() {
+        return this.burst;
     }
 
     public int getTickInterval() {

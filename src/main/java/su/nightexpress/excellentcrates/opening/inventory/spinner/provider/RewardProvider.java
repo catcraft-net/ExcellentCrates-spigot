@@ -20,6 +20,7 @@ import java.util.Set;
 public class RewardProvider implements SpinnerProvider, Writeable {
 
     private final Set<String> rarities;
+    private boolean showcase; // CatCraft: show the crate's broadcast (ultra) rewards in every spin
 
     public RewardProvider(@NotNull Set<String> rarities) {
         this.rarities = new HashSet<>(rarities);
@@ -34,12 +35,15 @@ public class RewardProvider implements SpinnerProvider, Writeable {
     public static RewardProvider read(@NotNull FileConfig config, @NotNull String path) {
         Set<String> rarities = ConfigValue.create(path + ".Rarities", Set.of(Placeholders.WILDCARD)).read(config);
 
-        return new RewardProvider(rarities);
+        RewardProvider provider = new RewardProvider(rarities);
+        provider.showcase = config.getBoolean(path + ".Showcase_Broadcast_Rewards", false);
+        return provider;
     }
 
     @Override
     public void write(@NotNull FileConfig config, @NotNull String path) {
         config.set(path + ".Rarities", this.rarities);
+        if (this.showcase) config.set(path + ".Showcase_Broadcast_Rewards", true);
     }
 
     @Override
@@ -53,7 +57,7 @@ public class RewardProvider implements SpinnerProvider, Writeable {
             rarities.addAll(this.rarities.stream().map(rId -> plugin.getCrateManager().getRarity(rId)).filter(Objects::nonNull).toList());
         }
 
-        return new RewardSpinner(data, opening, rarities);
+        return new RewardSpinner(data, opening, rarities, this.showcase);
     }
 
     @NotNull

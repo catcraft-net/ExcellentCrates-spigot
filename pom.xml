@@ -6,7 +6,7 @@
 
     <groupId>su.nightexpress.excellentcrates</groupId>
     <artifactId>ExcellentCrates</artifactId>
-    <version>6.6.1-catcraft.4</version>
+    <version>6.6.1-catcraft.12</version>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
@@ -22,6 +22,10 @@
     </distributionManagement>
 
     <repositories>
+        <repository>
+            <id>papermc</id>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
+        </repository>
         <repository>
             <id>central</id>
             <url>https://repo.maven.apache.org/maven2/</url>
@@ -65,9 +69,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.spigotmc</groupId>
-            <artifactId>spigot-api</artifactId>
-            <version>1.21.10-R0.1-SNAPSHOT</version>
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>paper-api</artifactId>
+            <version>26.3.build.205-stable</version>
             <scope>provided</scope>
         </dependency>
 

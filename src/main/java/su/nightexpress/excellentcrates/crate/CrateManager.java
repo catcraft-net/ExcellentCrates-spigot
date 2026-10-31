@@ -73,7 +73,9 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
     private final Map<WorldPos, Crate>     crateByPosMap;
     private final Map<String, PreviewMenu> previewByIdMap;
     private final Map<UUID, Long>          previewCooldown;
+    private final Map<UUID, Long>          alreadyOpeningNotified = new HashMap<>(); // CatCraft
     private final Set<String> warnedKeyConfigurations = new HashSet<>();
+    private final MassOpenQueue massOpenQueue = new MassOpenQueue(this.plugin, this); // CatCraft
 
     private OpeningCostMenu   costMenu;
     private OpeningAmountMenu amountMenu;
@@ -109,6 +111,7 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
 
     @Override
     protected void onShutdown() {
+        this.massOpenQueue.shutdown();
         this.warnedKeyConfigurations.clear();
         this.saveCrates();
 
@@ -481,6 +484,10 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
     public void preOpenCrate(@NotNull Player player, @NotNull CrateSource source) {
         Crate crate = source.getCrate();
 
+        // CatCraft: ignore crate clicks while a mass-open summary is showing, and for a second after a
+        // mass opening (held right-clicks would otherwise start another one and close the summary).
+        if (su.nightexpress.excellentcrates.opening.summary.MassOpenSummary.isBusy(player)) return;
+
         // Check if it's possible for a player to open crates.
         if (!this.testRestrictions(player, crate)) {
             this.pushback(player, source);
@@ -529,11 +536,13 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
             options.with(OpenOptions.Option.IGNORE_ANIMATION);
         }
 
-        for (int spent = 0; spent < openings; spent++) {
-            if (!this.openCrate(player, source, options, cost)) {
-                break;
-            }
+        if (openings <= 1) {
+            this.openCrate(player, source, options, cost);
+            return;
         }
+
+        // CatCraft: queue it; the server-wide queue opens a few per tick, taking turns between players.
+        this.massOpenQueue.submit(player, source, options, cost, openings);
     }
 
     private boolean testRestrictions(@NotNull Player player, @NotNull Crate crate) {
@@ -545,7 +554,13 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
 
         // Check if player is in other opening or if crate block is occupied by others.
         if (!this.plugin.getOpeningManager().isOpeningAvailable(player)) {
-            Lang.CRATE_OPEN_ERROR_ALREADY.message().send(player);
+            // CatCraft: held or repeated clicks would send this once per click; show it at most every 2 seconds.
+            long now = System.currentTimeMillis();
+            Long last = this.alreadyOpeningNotified.get(player.getUniqueId());
+            if (last == null || now - last >= 2000L) {
+                this.alreadyOpeningNotified.put(player.getUniqueId(), now);
+                Lang.CRATE_OPEN_ERROR_ALREADY.message().send(player);
+            }
             return false;
         }
 
@@ -650,7 +665,8 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
         }
 
         // Instant openings can award rewards synchronously, so payment must precede startOpening.
-        this.plugin.getOpeningManager().startOpening(player, opening, options.has(OpenOptions.Option.IGNORE_ANIMATION));
+        boolean instant = options.has(OpenOptions.Option.IGNORE_ANIMATION) || su.nightexpress.excellentcrates.opening.FastOpen.isEnabled(this.plugin, player); // CatCraft: /crates fast
+        this.plugin.getOpeningManager().startOpening(player, opening, instant);
 
         return true;
     }
@@ -772,7 +788,13 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
         this.previewCooldown.remove(player.getUniqueId());
     }
 
+    /** CatCraft: forget when this player was last told "already opening" (on quit). */
+    public void forgetAlreadyOpeningNotice(@NotNull Player player) {
+        this.alreadyOpeningNotified.remove(player.getUniqueId());
+    }
+
     public void playCrateEffects() {
+        boolean hideForBedrock = Config.CRATE_EFFECTS_HIDE_FOR_BEDROCK.get();
         this.getCrates().forEach(crate -> {
             if (!crate.isEffectEnabled()) return;
 
@@ -788,6 +810,7 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
                 if (location == null) return;
 
                 CrateUtils.getPlayersForEffects(location).forEach(player -> {
+                    if (hideForBedrock && CrateUtils.isBedrockPlayer(player)) return;
                     effect.playStep(location, particle, player);
                 });
             });

@@ -18,21 +18,30 @@ import java.util.Map;
 public class AnimationProvider implements SpinnerProvider, Writeable {
 
     private final Map<String, WeightedItem<NightItem>> itemMap;
+    private final Map<String, String>                  themeMap; // CatCraft: item id -> "primary"/"secondary"
 
     public AnimationProvider(@NotNull Map<String, WeightedItem<NightItem>> itemMap) {
+        this(itemMap, new HashMap<>());
+    }
+
+    public AnimationProvider(@NotNull Map<String, WeightedItem<NightItem>> itemMap, @NotNull Map<String, String> themeMap) {
         this.itemMap = new HashMap<>(itemMap);
+        this.themeMap = new HashMap<>(themeMap);
     }
 
     @NotNull
     public static AnimationProvider read(@NotNull FileConfig config, @NotNull String path) {
         Map<String, WeightedItem<NightItem>> itemsMap = new HashMap<>();
+        Map<String, String> themeMap = new HashMap<>(); // CatCraft
         config.getSection(path + ".Items").forEach(sId -> {
             double weight = config.getDouble(path + ".Items." + sId + ".Chance", 100D);
             NightItem item = config.getCosmeticItem(path + ".Items." + sId);
             itemsMap.put(sId.toLowerCase(), new WeightedItem<>(item, weight));
+            String theme = config.getString(path + ".Items." + sId + ".Theme");
+            if (theme != null && !theme.isBlank()) themeMap.put(sId.toLowerCase(), theme);
         });
 
-        return new AnimationProvider(itemsMap);
+        return new AnimationProvider(itemsMap, themeMap);
     }
 
     @Override
@@ -42,13 +51,19 @@ public class AnimationProvider implements SpinnerProvider, Writeable {
         this.itemMap.forEach((id, witem) -> {
             config.set(path + ".Items." + id + ".Chance", witem.getWeight());
             config.set(path + ".Items." + id, witem.getItem());
+            if (this.themeMap.containsKey(id)) config.set(path + ".Items." + id + ".Theme", this.themeMap.get(id));
         });
     }
 
     @Override
     @NotNull
     public AnimationSpinner createSpinner(@NotNull CratesPlugin plugin, @NotNull SpinnerData data, @NotNull InventoryOpening opening) {
-        return new AnimationSpinner(data, opening, new ArrayList<>(this.itemMap.values()));
+        Map<NightItem, String> themeByItem = new java.util.IdentityHashMap<>();
+        this.themeMap.forEach((id, theme) -> {
+            WeightedItem<NightItem> item = this.itemMap.get(id);
+            if (item != null) themeByItem.put(item.getItem(), theme);
+        });
+        return new AnimationSpinner(data, opening, new ArrayList<>(this.itemMap.values()), themeByItem);
     }
 
     @NotNull

@@ -49,6 +49,7 @@ public class CrateListener extends AbstractListener<CratesPlugin> {
         Player player = event.getPlayer();
 
         this.manager.removePreviewCooldown(player);
+        this.manager.forgetAlreadyOpeningNotice(player);
     }
 
     @EventHandler(priority = EventPriority.HIGH)

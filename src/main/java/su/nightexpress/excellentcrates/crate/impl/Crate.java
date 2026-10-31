@@ -118,7 +118,12 @@ public class Crate implements ConfigBacked {
             return;
         }
 
-        this.loadConfig().edit(this::load);
+        // CatCraft: only write the file back when loading changed it (an old format converted or a missing option
+        // added). Saving every crate on each /crates reload re-serialised all of them on the main thread.
+        FileConfig config = this.loadConfig();
+        java.util.Map<String, Object> before = su.nightexpress.excellentcrates.util.ConfigSnapshot.of(config);
+        this.load(config);
+        if (!before.equals(su.nightexpress.excellentcrates.util.ConfigSnapshot.of(config))) config.saveChanges();
     }
 
     private void load(@NotNull FileConfig config) throws IllegalStateException {

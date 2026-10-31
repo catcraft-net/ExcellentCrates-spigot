@@ -20,7 +20,7 @@ public class ItemHelper {
 
     @NotNull
     public static AdaptedItem readOrPlaceholder(@NotNull FileConfig config, @NotNull String path) {
-        return read(config, path).orElse(vanilla(CrateUtils.getQuestionStack()));
+        return read(config, path).orElseGet(DecodedItemCache::question); // CatCraft: was built eagerly for every item
     }
 
     @NotNull
@@ -70,6 +70,11 @@ public class ItemHelper {
             }
         }
 
+        // CatCraft: vanilla items are decoded once and reused across reloads (see DecodedItemCache).
+        if ("vanilla".equalsIgnoreCase(config.getString(path + ".Provider"))) {
+            ItemTag tag = ItemTag.read(config, path + ".Data");
+            if (tag != null && !tag.isEmpty()) return Optional.of(DecodedItemCache.vanilla(tag));
+        }
         return Optional.ofNullable(AdaptedItemStack.read(config, path));
     }
 

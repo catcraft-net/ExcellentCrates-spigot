@@ -126,6 +126,18 @@ public class BaseCommands {
             .executes(this::giveCrate)
         );
 
+        nodeBuilder.branch(Commands.literal("fast") // CatCraft
+            .description(Lang.COMMAND_FAST_DESC)
+            .permission(Perms.COMMAND_FAST)
+            .playerOnly()
+            .executes((context, arguments) -> {
+                Player player = context.getPlayerOrThrow();
+                boolean enabled = su.nightexpress.excellentcrates.opening.FastOpen.toggle(plugin, player);
+                (enabled ? Lang.COMMAND_FAST_ON : Lang.COMMAND_FAST_OFF).message().send(player);
+                return true;
+            })
+        );
+
         nodeBuilder.branch(Commands.literal("open")
             .description(Lang.COMMAND_OPEN_DESC)
             .permission(Perms.COMMAND_OPEN)

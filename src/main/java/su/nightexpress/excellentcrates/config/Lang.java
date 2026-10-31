@@ -32,6 +32,19 @@ public class Lang implements LangContainer {
     public static final TextLocale COMMAND_EDITOR_DESC         = LangEntry.builder("Command.Editor.Desc").text("Open editor GUI.");
     public static final TextLocale COMMAND_DROP_DESC           = LangEntry.builder("Command.Drop.Desc").text("Spawn crate item in the world.");
     public static final TextLocale COMMAND_DROP_KEY_DESC       = LangEntry.builder("Command.DropKey.Desc").text("Spawn key item in the world.");
+    public static final MessageLocale CRATE_SKIP_HINT_TITLE = LangEntry.builder("Crate.Open.SkipHint.Title").titleMessage(
+        SOFT_YELLOW.wrap(BOLD.wrap("Skipping animations?")),
+        GRAY.wrap("Type ") + WHITE.wrap("/crates fast") + GRAY.wrap(" to open crates instantly"),
+        Sound.BLOCK_NOTE_BLOCK_PLING
+    );
+    public static final MessageLocale CRATE_SKIP_HINT_CHAT = LangEntry.builder("Crate.Open.SkipHint.Chat").chatMessage(
+        GRAY.wrap("Tip: you can turn crate animations off. ") + RUN_COMMAND.with("/crates fast").wrap(GREEN.wrap(BOLD.wrap("[Click to open crates instantly]")))
+            + GRAY.wrap(" (or type ") + WHITE.wrap("/crates fast") + GRAY.wrap(")"));
+    public static final TextLocale COMMAND_FAST_DESC           = LangEntry.builder("Command.Fast.Desc").text("Toggle skipping crate opening animations.");
+    public static final MessageLocale COMMAND_FAST_ON  = LangEntry.builder("Command.Fast.On").chatMessage(
+        GRAY.wrap("Fast opening " + GREEN.wrap("enabled") + ": crates open instantly. Use " + WHITE.wrap("/crates fast") + " again to see animations."));
+    public static final MessageLocale COMMAND_FAST_OFF = LangEntry.builder("Command.Fast.Off").chatMessage(
+        GRAY.wrap("Fast opening " + RED.wrap("disabled") + ": opening animations are back."));
     public static final TextLocale COMMAND_OPEN_DESC           = LangEntry.builder("Command.Open.Desc").text("Open a crate.");
     public static final TextLocale COMMAND_OPEN_FOR_DESC       = LangEntry.builder("Command.OpenFor.Desc").text("Open crate for a player.");
     public static final TextLocale COMMAND_GIVE_DESC           = LangEntry.builder("Command.Give.Desc").text("Gives crate to a player.");

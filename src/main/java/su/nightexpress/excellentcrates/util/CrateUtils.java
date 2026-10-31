@@ -30,6 +30,11 @@ public class CrateUtils {
         return players;
     }
 
+    /** CatCraft: Floodgate gives Bedrock players UUIDs whose top 64 bits are zero. */
+    public static boolean isBedrockPlayer(@NotNull Player player) {
+        return player.getUniqueId().getMostSignificantBits() == 0L;
+    }
+
     public static boolean isInEffectRange(@NotNull Player player, @NotNull Location location) {
         World world = location.getWorld();
         int distance = Config.CRATE_EFFECTS_VISIBILITY_DISTANCE.get();

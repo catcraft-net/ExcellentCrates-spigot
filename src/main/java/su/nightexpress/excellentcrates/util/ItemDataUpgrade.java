@@ -27,9 +27,12 @@ public final class ItemDataUpgrade {
 
     public record Result(int upgraded, int skipped, int failed) {}
 
+    /** CatCraft: files already checked this server session (by modified time), so /crates reload skips them. */
+    private static final java.util.Map<Path, java.nio.file.attribute.FileTime> CHECKED = new java.util.concurrent.ConcurrentHashMap<>();
+
     public static void run(CratesPlugin plugin) {
         Path root = plugin.getDataFolder().toPath();
-        int upgraded = 0, changedFiles = 0, skipped = 0, failed = 0;
+        int upgraded = 0, changedFiles = 0, skipped = 0, failed = 0, unchanged = 0;
         for (String directory : List.of("crates", "keys")) {
             Path folder = root.resolve(directory);
             if (!Files.isDirectory(folder, LinkOption.NOFOLLOW_LINKS)) continue;
@@ -39,8 +42,11 @@ public final class ItemDataUpgrade {
                     .filter(file -> !folder.relativize(file).toString().contains("backups"))
                     .sorted().toList()) {
                     try {
+                        java.nio.file.attribute.FileTime modified = Files.getLastModifiedTime(path);
+                        if (modified.equals(CHECKED.get(path))) { unchanged++; continue; }
                         Path backups = root.resolve("item-data-backups").resolve(root.relativize(path).getParent());
                         Result result = upgradeFile(path, backups, plugin::warn);
+                        CHECKED.put(path, Files.getLastModifiedTime(path));
                         upgraded += result.upgraded();
                         if (result.upgraded() > 0) changedFiles++;
                         skipped += result.skipped();
@@ -58,7 +64,7 @@ public final class ItemDataUpgrade {
         }
         plugin.info("Item data upgrade: " + upgraded + " items in " + changedFiles + " files; "
             + skipped + " unknown/newer versions left unchanged; " + failed + " failures. Target data version: "
-            + Bukkit.getUnsafe().getDataVersion() + ".");
+            + Bukkit.getUnsafe().getDataVersion() + "." + (unchanged > 0 ? " Skipped " + unchanged + " files already checked." : ""));
     }
 
     public static Result upgradeFile(Path file, Path backupDirectory, Consumer<String> warning) throws Exception {
