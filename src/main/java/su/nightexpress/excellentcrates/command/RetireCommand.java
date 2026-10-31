@@ -95,6 +95,85 @@ public class RetireCommand {
                 return true;
             })
         );
+
+        // CatCraft: change a crate's particle and effect shape, live, with tab complete.
+        nodeBuilder.branch(Commands.literal("particle")
+            .description("Set the particle a crate's effect uses.")
+            .permission(Perms.COMMAND_RETIRE)
+            .withArguments(
+                Commands.argument(NEW_CRATE, (context, string) -> this.crate(string)).suggestions((reader, context) -> plugin.getCrateManager().getCrateIds()),
+                Commands.argument("particle", (context, string) -> {
+                    org.bukkit.Particle particle = this.particle(string);
+                    if (particle == null) throw su.nightexpress.nightcore.commands.exceptions.CommandSyntaxException.custom(su.nightexpress.excellentcrates.config.Lang.ERROR_COMMAND_INVALID_CRATE_ARGUMENT);
+                    return particle;
+                }).suggestions((reader, context) -> this.particleNames())
+            )
+            .executes((context, arguments) -> {
+                Crate crate = arguments.get(NEW_CRATE, Crate.class);
+                org.bukkit.Particle particle = arguments.get("particle", org.bukkit.Particle.class);
+                crate.setEffectParticle(su.nightexpress.nightcore.util.wrapper.UniParticle.of(particle));
+                crate.setEffectEnabled(true);
+                if (crate.getEffect().isDummy()) crate.setEffectType(su.nightexpress.excellentcrates.crate.effect.EffectId.HELIX);
+                crate.saveForce();
+                context.getSender().sendMessage("§a" + crate.getId() + " §7now uses §f" + particle.name().toLowerCase() + " §7particles (§f" + crate.getEffect().getId() + "§7).");
+                return true;
+            })
+        );
+
+        nodeBuilder.branch(Commands.literal("effect")
+            .description("Set the shape of a crate's particle effect.")
+            .permission(Perms.COMMAND_RETIRE)
+            .withArguments(
+                Commands.argument(NEW_CRATE, (context, string) -> this.crate(string)).suggestions((reader, context) -> plugin.getCrateManager().getCrateIds()),
+                Commands.argument("effect", (context, string) -> {
+                    String id = string.toLowerCase();
+                    if (!id.equals("none") && su.nightexpress.excellentcrates.registry.CratesRegistries.getEffects().stream().noneMatch(e -> e.getId().equalsIgnoreCase(id)))
+                        throw su.nightexpress.nightcore.commands.exceptions.CommandSyntaxException.custom(su.nightexpress.excellentcrates.config.Lang.ERROR_COMMAND_INVALID_CRATE_ARGUMENT);
+                    return id;
+                }).suggestions((reader, context) -> {
+                    List<String> ids = new ArrayList<>();
+                    su.nightexpress.excellentcrates.registry.CratesRegistries.getEffects().forEach(e -> { if (!e.isDummy()) ids.add(e.getId()); });
+                    java.util.Collections.sort(ids);
+                    ids.add(0, "none");
+                    return ids;
+                })
+            )
+            .executes((context, arguments) -> {
+                Crate crate = arguments.get(NEW_CRATE, Crate.class);
+                String id = arguments.get("effect", String.class);
+                if (id.equals("none")) {
+                    crate.setEffectEnabled(false);
+                } else {
+                    crate.setEffectType(id);
+                    crate.setEffectEnabled(true);
+                }
+                crate.saveForce();
+                context.getSender().sendMessage("§a" + crate.getId() + " §7effect is now §f" + (id.equals("none") ? "off" : id) + "§7.");
+                return true;
+            })
+        );
+    }
+
+    @Nullable
+    private org.bukkit.Particle particle(@NotNull String name) {
+        for (org.bukkit.Particle particle : org.bukkit.Particle.values()) {
+            if (particle.name().equalsIgnoreCase(name) && this.isPlainParticle(particle)) return particle;
+        }
+        return null;
+    }
+
+    private boolean isPlainParticle(@NotNull org.bukkit.Particle particle) {
+        return su.nightexpress.excellentcrates.util.CrateUtils.isSupportedParticle(particle) && particle.getDataType() == Void.class;
+    }
+
+    @NotNull
+    private List<String> particleNames() {
+        List<String> names = new ArrayList<>();
+        for (org.bukkit.Particle particle : org.bukkit.Particle.values()) {
+            if (this.isPlainParticle(particle)) names.add(particle.name().toLowerCase());
+        }
+        java.util.Collections.sort(names);
+        return names;
     }
 
     @NotNull
