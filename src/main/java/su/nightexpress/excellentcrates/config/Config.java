@@ -117,6 +117,12 @@ public class Config {
         "Sets max. distance where players can see crate particles and holograms."
     );
 
+    /** CatCraft: Bedrock (Geyser/Floodgate) clients lag on the constant crate particles. */
+    public static final ConfigValue<Boolean> CRATE_EFFECTS_HIDE_FOR_BEDROCK = ConfigValue.create("Crate.Effects.Hide_For_Bedrock",
+        true,
+        "When enabled, Bedrock players (Floodgate) don't get crate particle effects. Java players still see them."
+    );
+
     public static final ConfigValue<Map<String, HologramTemplate>> CRATE_HOLOGRAM_TEMPLATES = ConfigValue.forMapById("Crate.Holograms.TemplateList",
         HologramTemplate::read,
         map -> map.putAll(HologramTemplate.getDefaultTemplates()),

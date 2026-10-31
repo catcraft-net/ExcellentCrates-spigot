@@ -794,6 +794,7 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
     }
 
     public void playCrateEffects() {
+        boolean hideForBedrock = Config.CRATE_EFFECTS_HIDE_FOR_BEDROCK.get();
         this.getCrates().forEach(crate -> {
             if (!crate.isEffectEnabled()) return;
 
@@ -809,6 +810,7 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
                 if (location == null) return;
 
                 CrateUtils.getPlayersForEffects(location).forEach(player -> {
+                    if (hideForBedrock && CrateUtils.isBedrockPlayer(player)) return;
                     effect.playStep(location, particle, player);
                 });
             });
