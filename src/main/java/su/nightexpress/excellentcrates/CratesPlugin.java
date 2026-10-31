@@ -152,11 +152,17 @@ public class CratesPlugin extends NightPlugin {
         CratesAPI.clear();
     }
 
+    private su.nightexpress.excellentcrates.command.TabFilter tabFilter; // CatCraft
+
     private void loadCommands() {
         this.rootCommand = NightCommand.forPlugin(this, builder -> {
             new BaseCommands(this).load(builder);
             new su.nightexpress.excellentcrates.command.RetireCommand(this).load(builder); // CatCraft
         });
+        if (this.tabFilter == null) { // CatCraft: once, even across /crate reload
+            this.tabFilter = new su.nightexpress.excellentcrates.command.TabFilter(this);
+            this.getServer().getPluginManager().registerEvents(this.tabFilter, this);
+        }
     }
 
     public void registerAddon(@NotNull CratesAddon addon) {
