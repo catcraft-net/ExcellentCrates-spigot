@@ -153,7 +153,10 @@ public class CratesPlugin extends NightPlugin {
     }
 
     private void loadCommands() {
-        this.rootCommand = NightCommand.forPlugin(this, builder -> new BaseCommands(this).load(builder));
+        this.rootCommand = NightCommand.forPlugin(this, builder -> {
+            new BaseCommands(this).load(builder);
+            new su.nightexpress.excellentcrates.command.RetireCommand(this).load(builder); // CatCraft
+        });
     }
 
     public void registerAddon(@NotNull CratesAddon addon) {

@@ -117,6 +117,13 @@ public class Config {
         "Sets max. distance where players can see crate particles and holograms."
     );
 
+    /** CatCraft: ender chests in the crates warp, in the order /crate retire fills them. */
+    public static final ConfigValue<List<String>> CRATE_RETIRE_SLOTS = ConfigValue.create("Crate.Retire.Slots",
+        new java.util.ArrayList<>(),
+        "Crates-warp ender chests for /crate retire, as \"x,y,z,world\", in the order they should fill.",
+        "The first one that no crate uses and that holds an ender chest is picked."
+    );
+
     /** CatCraft: Bedrock (Geyser/Floodgate) clients lag on the constant crate particles. */
     public static final ConfigValue<Boolean> CRATE_EFFECTS_HIDE_FOR_BEDROCK = ConfigValue.create("Crate.Effects.Hide_For_Bedrock",
         true,
