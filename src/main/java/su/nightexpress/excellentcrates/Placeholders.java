@@ -52,6 +52,14 @@ public class Placeholders extends su.nightexpress.nightcore.util.Placeholders {
     public static final String CRATE_LAST_OPENER = "%crate_last_opener%";
     public static final String CRATE_LAST_REWARD = "%crate_last_reward%";
     public static final String CRATE_OPEN_COST = "%crate_open_cost%";
+    // CatCraft pity (per viewer; replaced in the preview menu, holograms and PlaceholderAPI)
+    public static final String CRATE_PITY_COUNT = "%crate_pity_count%"; // keys since the viewer's last Ultra Legendary
+    public static final String CRATE_PITY_LEFT  = "%crate_pity_left%";  // keys until the guarantee (0 = next key)
+    public static final String CRATE_PITY_HARD  = "%crate_pity_hard%";
+    public static final String CRATE_PITY_GROUP = "%crate_pity_group%";
+    public static final String CRATE_PITY_LINE1 = "%crate_pity_line1%"; // the two lang lines, resolved for the viewer
+    public static final String CRATE_PITY_LINE2 = "%crate_pity_line2%";
+    public static final String CRATE_PITY_LORE  = "%crate_pity_lore%";  // both lines (multi-line, for item lore)
 
     public static final String KEY_ID   = "%key_id%";
     public static final String KEY_NAME = "%key_name%";

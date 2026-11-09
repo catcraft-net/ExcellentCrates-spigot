@@ -211,6 +211,25 @@ public class Lang implements LangContainer {
     public static final TextLocale OTHER_COOLDOWN_READY       = LangEntry.builder("Other.Cooldown.Ready").text(GREEN.wrap("Ready to Open!"));
     public static final TextLocale OTHER_LAST_OPENER_EMPTY    = LangEntry.builder("Other.LastOpener.Empty").text("-");
     public static final TextLocale OTHER_LAST_REWARD_EMPTY    = LangEntry.builder("Other.LastReward.Empty").text("-");
+
+    // CatCraft pity. Plain text that also reads fine on Bedrock; &7 text, &c numbers. %crate_pity_left% = keys until
+    // the guarantee. Line2_Next is used instead of Line2 when the next key is already guaranteed.
+    public static final TextLocale PITY_LORE_LINE1 = LangEntry.builder("Pity.Lore.Line1").text("&7Ultra Legendary guaranteed");
+    public static final TextLocale PITY_LORE_LINE2 = LangEntry.builder("Pity.Lore.Line2").text("&7within &c" + CRATE_PITY_LEFT + " &7keys");
+    public static final TextLocale PITY_LORE_LINE2_NEXT = LangEntry.builder("Pity.Lore.Line2_Next").text("&7on your next key");
+
+    public static final TextLocale COMMAND_PITY_DESC     = LangEntry.builder("Command.Pity.Desc").text("Show pity counters (keys since the last Ultra Legendary).");
+    public static final TextLocale COMMAND_PITY_SET_DESC = LangEntry.builder("Command.Pity.Set.Desc").text("Set a player's pity counter for a group.");
+    public static final MessageLocale COMMAND_PITY_SHOW_HEADER = LangEntry.builder("Command.Pity.Show.Header").chatMessage(
+        GRAY.wrap("Pity counters of " + WHITE.wrap(PLAYER_NAME) + " (keys since the last Ultra Legendary)"));
+    public static final MessageLocale COMMAND_PITY_SHOW_ENTRY = LangEntry.builder("Command.Pity.Show.Entry").chatMessage(
+        GRAY.wrap(" · " + WHITE.wrap(GENERIC_NAME) + " · " + RED.wrap(GENERIC_CURRENT) + " keys, guaranteed in " + RED.wrap(GENERIC_AMOUNT) + " more (cap " + RED.wrap(GENERIC_MAX) + ")"));
+    public static final MessageLocale COMMAND_PITY_SHOW_EMPTY = LangEntry.builder("Command.Pity.Show.Empty").chatMessage(
+        GRAY.wrap(WHITE.wrap(PLAYER_NAME) + " has no pity counters yet."));
+    public static final MessageLocale COMMAND_PITY_SET_DONE = LangEntry.builder("Command.Pity.Set.Done").chatMessage(
+        GRAY.wrap("Set the " + WHITE.wrap(GENERIC_NAME) + " pity counter of " + WHITE.wrap(PLAYER_NAME) + " to " + RED.wrap(GENERIC_AMOUNT) + "."));
+    public static final MessageLocale COMMAND_PITY_NO_GROUP = LangEntry.builder("Command.Pity.NoGroup").chatMessage(
+        GRAY.wrap("No crate uses the pity group " + WHITE.wrap(GENERIC_NAME) + ". Known groups " + WHITE.wrap(GENERIC_AVAILABLE) + "."));
     public static final TextLocale OTHER_NEXT_MILESTONE_EMPTY = LangEntry.builder("Other.NextMilestone.Empty").text("-");
 
     public static final TextLocale OTHER_MIDNIGHT = LangEntry.builder("Other.Midnight").text("Midnight");

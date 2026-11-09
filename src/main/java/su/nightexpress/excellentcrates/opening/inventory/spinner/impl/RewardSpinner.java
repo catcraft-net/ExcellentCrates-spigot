@@ -119,7 +119,8 @@ public class RewardSpinner extends AbstractSpinner {
     private void prepareRewards() {
         for (int winSlot : this.winSlots) {
             if (Lists.contains(this.slots, winSlot)) {
-                this.opening.addReward(this.rollReward(false));
+                // CatCraft: the real prize goes through the pity check; the normal roll below is unchanged.
+                this.opening.addReward(this.opening.getCrate().rollPrize(this.opening.getPlayer(), () -> this.rollReward(false)));
             }
         }
     }
