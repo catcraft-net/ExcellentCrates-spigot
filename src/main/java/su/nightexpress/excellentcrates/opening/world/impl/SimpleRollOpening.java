@@ -44,7 +44,7 @@ public class SimpleRollOpening extends WorldOpening {
         this.spinInterval = spinInterval;
         this.finishDelay = finishDelay;
 
-        this.reward = source.getCrate().rollReward(player);
+        this.reward = source.getCrate().rollPrize(player, () -> source.getCrate().rollReward(player)); // CatCraft pity
     }
 
     private void onFirstTick() {

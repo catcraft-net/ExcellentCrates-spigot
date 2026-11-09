@@ -39,6 +39,7 @@ public class Perms {
     public static final UniPermission COMMAND_PREVIEW_OTHERS     = new UniPermission(PREFIX_COMMAND + "preview.others");
     public static final UniPermission COMMAND_FAST               = new UniPermission(PREFIX_COMMAND + "fast", "Lets players toggle skipping opening animations.", TRUE); // CatCraft
     public static final UniPermission COMMAND_RETIRE             = new UniPermission(PREFIX_COMMAND + "retire"); // CatCraft
+    public static final UniPermission COMMAND_PITY               = new UniPermission(PREFIX_COMMAND + "pity"); // CatCraft
     public static final UniPermission COMMAND_RESETCOOLDOWN      = new UniPermission(PREFIX_COMMAND + "resetcooldown");
 
     public static final UniPermission BYPASS_CRATE_COOLDOWN  = new UniPermission(PREFIX_BYPASS + "crate.opencooldown");

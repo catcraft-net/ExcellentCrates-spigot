@@ -69,6 +69,12 @@ public interface Reward extends Writeable {
 
     void setBroadcast(boolean broadcast);
 
+    /**
+     * CatCraft: whether this reward counts as an Ultra Legendary for the pity system (its description says
+     * "ULTRA-LEGENDARY" / "ULTRA LEGENDARY", unless {@code Pity_Reward} overrides it in the crate file).
+     */
+    boolean isUltraLegendary();
+
     @NotNull LimitValues getLimits();
 
     void setLimits(@NotNull LimitValues limitValues);

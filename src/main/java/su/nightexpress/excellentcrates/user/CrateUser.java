@@ -15,9 +15,11 @@ public class CrateUser extends AbstractUser {
     private final Map<String, Integer>       keys;
     private final Map<String, Integer>       keysOnHold;
     private final Map<String, UserCrateData> crateDataMap;
+    private final Map<String, Integer>       pity; // CatCraft: pity group -> keys opened since the last Ultra Legendary
 
     public CrateUser(@NotNull UUID uuid, @NotNull String name) {
         this(uuid, name, System.currentTimeMillis(), System.currentTimeMillis(),
+            new HashMap<>(),
             new HashMap<>(),
             new HashMap<>(),
             new HashMap<>()
@@ -31,10 +33,36 @@ public class CrateUser extends AbstractUser {
                      @NotNull Map<String, Integer> keys,
                      @NotNull Map<String, Integer> keysOnHold,
                      @NotNull Map<String, UserCrateData> crateDataMap) {
+        this(uuid, name, dateCreated, lastOnline, keys, keysOnHold, crateDataMap, new HashMap<>());
+    }
+
+    public CrateUser(@NotNull UUID uuid,
+                     @NotNull String name,
+                     long dateCreated,
+                     long lastOnline,
+                     @NotNull Map<String, Integer> keys,
+                     @NotNull Map<String, Integer> keysOnHold,
+                     @NotNull Map<String, UserCrateData> crateDataMap,
+                     @NotNull Map<String, Integer> pity) {
         super(uuid, name, dateCreated, lastOnline);
         this.keys = keys;
         this.keysOnHold = keysOnHold;
         this.crateDataMap = new HashMap<>(crateDataMap);
+        this.pity = new HashMap<>(pity);
+    }
+
+    /** CatCraft: pity group -> keys opened since the player's last Ultra Legendary. */
+    @NotNull
+    public Map<String, Integer> getPityMap() {
+        return this.pity;
+    }
+
+    public int getPity(@NotNull String group) {
+        return this.pity.getOrDefault(group.toLowerCase(), 0);
+    }
+
+    public void setPity(@NotNull String group, int count) {
+        this.pity.put(group.toLowerCase(), Math.max(0, count));
     }
 
     @NotNull

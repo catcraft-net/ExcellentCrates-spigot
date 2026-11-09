@@ -39,6 +39,7 @@ public class CratesPlugin extends NightPlugin {
 
     private DataHandler dataHandler;
     private DataManager dataManager;
+    private su.nightexpress.excellentcrates.crate.pity.PityService pityService; // CatCraft
     private UserManager userManager;
 
     private HologramManager hologramManager;
@@ -93,6 +94,8 @@ public class CratesPlugin extends NightPlugin {
 
         this.userManager = new UserManager(this, this.dataHandler);
         this.userManager.setup();
+
+        this.pityService = new su.nightexpress.excellentcrates.crate.pity.PityService(this); // CatCraft
 
         if (Config.HOLOGRAMS_ENABLED.get()) {
             this.hologramManager = new HologramManager(this);
@@ -158,6 +161,7 @@ public class CratesPlugin extends NightPlugin {
         this.rootCommand = NightCommand.forPlugin(this, builder -> {
             new BaseCommands(this).load(builder);
             new su.nightexpress.excellentcrates.command.RetireCommand(this).load(builder); // CatCraft
+            new su.nightexpress.excellentcrates.command.PityCommand(this).load(builder); // CatCraft
         });
         if (this.tabFilter == null) { // CatCraft: once, even across /crate reload
             this.tabFilter = new su.nightexpress.excellentcrates.command.TabFilter(this);
@@ -200,6 +204,12 @@ public class CratesPlugin extends NightPlugin {
     @NotNull
     public DataManager getDataManager() {
         return this.dataManager;
+    }
+
+    /** CatCraft: pity counters and the pity-aware prize roll. */
+    @NotNull
+    public su.nightexpress.excellentcrates.crate.pity.PityService getPityService() {
+        return this.pityService;
     }
 
     @NotNull
