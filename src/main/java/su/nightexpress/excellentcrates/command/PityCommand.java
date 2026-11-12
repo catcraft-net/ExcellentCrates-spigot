@@ -91,11 +91,16 @@ public class PityCommand {
         Lang.COMMAND_PITY_SHOW_HEADER.message().send(sender, replacer -> replacer.replace(Placeholders.PLAYER_NAME, user.getName()));
         counters.forEach((group, count) -> {
             int hard = this.plugin.getPityService().getHardCap(group);
+            int left = Math.max(0, hard - count);
+            // Same rule as the hologram: never "within 1 keys"; at 149 of 150 the next key is the guaranteed one.
+            String promise = (hard <= 0 ? Lang.COMMAND_PITY_SHOW_UNUSED.text()
+                : PitySettings.isNextKey(left) ? Lang.COMMAND_PITY_SHOW_NEXT.text() : Lang.COMMAND_PITY_SHOW_LEFT.text())
+                .replace(Placeholders.GENERIC_AMOUNT, String.valueOf(left))
+                .replace(Placeholders.GENERIC_MAX, String.valueOf(hard));
             Lang.COMMAND_PITY_SHOW_ENTRY.message().send(sender, replacer -> replacer
                 .replace(Placeholders.GENERIC_NAME, group)
                 .replace(Placeholders.GENERIC_CURRENT, String.valueOf(count))
-                .replace(Placeholders.GENERIC_AMOUNT, String.valueOf(Math.max(0, hard - count)))
-                .replace(Placeholders.GENERIC_MAX, hard > 0 ? String.valueOf(hard) : "-")
+                .replace(Placeholders.GENERIC_AMOUNT, promise)
             );
         });
     }

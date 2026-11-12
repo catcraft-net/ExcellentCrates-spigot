@@ -471,7 +471,18 @@ public class Crate implements ConfigBacked {
     @NotNull
     public List<String> getHologramText() {
         HologramTemplate template = Config.getHologramTemplate(this.hologramTemplateId);
-        return template == null ? Collections.emptyList() : template.getText();
+        if (template == null) return Collections.emptyList();
+
+        List<String> text = template.getText();
+        // CatCraft pity: a crate with a pity group gets the two pity lines under the template's lines. They stay as
+        // %crate_pity_line1% / %crate_pity_line2% here; HologramManager resolves them for each viewer (own counter).
+        if (text.isEmpty() || !this.pity.isEnabled() || !Config.PITY_SHOW_IN_HOLOGRAM.get()) return text;
+        if (text.stream().anyMatch(line -> line.contains(Placeholders.CRATE_PITY_LINE1) || line.contains(Placeholders.CRATE_PITY_LORE))) return text;
+
+        List<String> withPity = new ArrayList<>(text);
+        withPity.add(Placeholders.CRATE_PITY_LINE1);
+        withPity.add(Placeholders.CRATE_PITY_LINE2);
+        return withPity;
     }
 
     public boolean hasRewards(@NotNull Player player) {

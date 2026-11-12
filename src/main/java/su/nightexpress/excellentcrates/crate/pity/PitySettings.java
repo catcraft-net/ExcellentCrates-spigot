@@ -68,8 +68,16 @@ public record PitySettings(@NotNull String group, int soft, int hard, double ste
         return Math.min(1D, this.step * (keyNumber - this.soft + 1));
     }
 
-    /** Keys left until the guarantee, for a player whose counter is {@code count}: never below 0. */
+    /**
+     * Keys left until the guarantee, for a player whose counter is {@code count}: never below 0. 1 means the
+     * next key is the guaranteed one (counter 149 of Hard 150); 0 only when the counter is already at or past the cap.
+     */
     public int keysLeft(int count) {
         return Math.max(0, this.hard - count);
+    }
+
+    /** Whether the player's next key is already guaranteed (keys left 1 or 0), so "within N keys" must not be shown. */
+    public static boolean isNextKey(int keysLeft) {
+        return keysLeft <= 1;
     }
 }

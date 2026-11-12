@@ -104,16 +104,12 @@ public class PreviewMenu extends LinkedMenu<CratesPlugin, CrateSource> implement
                 restrictions.addAll(this.noPermissionLore);
             }
 
-            // CatCraft pity: Ultra Legendary rewards of a pity crate show the two lang lines under their lore.
-            List<String> lore = new ArrayList<>(this.rewardLore);
-            if (crate.getPity().isEnabled() && reward.isUltraLegendary()) {
-                lore.addAll(plugin.getPityService().getLoreLines(player, crate));
-            }
-
+            // CatCraft pity: the reward items carry no pity text on purpose (it read as a promise of that item);
+            // the promise of "a random Ultra Legendary" is in the crate hologram instead, per viewer.
             return NightItem.fromItemStack(reward.getPreviewItem())
                 .ignoreNameAndLore()
                 .setDisplayName(this.rewardName)
-                .setLore(lore)
+                .setLore(this.rewardLore)
                 .replacement(replacer -> {
                         replacer
                             .replace(plugin.getPityService().placeholders(player, crate))

@@ -65,28 +65,24 @@ public class PityService {
         return this.plugin.getUserManager().getOrFetch(player).getPity(settings.group());
     }
 
-    /** Keys until the guarantee for this player on this crate (0 = the next key is guaranteed). */
+    /** Keys until the guarantee for this player on this crate (1 = the next key is guaranteed, see {@link PitySettings#keysLeft}). */
     public int getKeysLeft(@NotNull Player player, @NotNull Crate crate) {
         PitySettings settings = crate.getPity();
         if (!settings.isEnabled()) return 0;
         return settings.keysLeft(this.getCount(player, crate));
     }
 
-    /** The two player-facing lore lines from the lang file, resolved for this player and crate. */
+    /** The second hologram line for {@code keysLeft}: "guaranteed on your next key" once the next key is guaranteed. */
     @NotNull
-    public List<String> getLoreLines(@NotNull Player player, @NotNull Crate crate) {
-        if (!crate.getPity().isEnabled()) return List.of();
-
-        int left = this.getKeysLeft(player, crate);
-        String line2 = left <= 0 ? Lang.PITY_LORE_LINE2_NEXT.text() : Lang.PITY_LORE_LINE2.text();
-        UnaryOperator<String> replacer = this.placeholders(player, crate);
-        return List.of(replacer.apply(Lang.PITY_LORE_LINE1.text()), replacer.apply(line2));
+    public static String secondLine(int keysLeft) {
+        return PitySettings.isNextKey(keysLeft) ? Lang.PITY_HOLOGRAM_LINE2_NEXT.text() : Lang.PITY_HOLOGRAM_LINE2.text();
     }
 
     /**
-     * Per-player replacements for the {@code %crate_pity_*%} placeholders (used in the preview menu,
-     * holograms and anywhere a crate placeholder is applied for a player). {@code %crate_pity_lore%}
-     * is the two lines joined with a newline; use {@link #getLoreLines} for list lore.
+     * Per-player replacements for the {@code %crate_pity_*%} placeholders (used in the crate hologram, the preview
+     * menu's own items and anywhere a crate placeholder is applied for a player). {@code %crate_pity_line1%} and
+     * {@code %crate_pity_line2%} are the lang file's hologram lines resolved for the viewer; {@code %crate_pity_lore%}
+     * is both joined with a newline.
      */
     @NotNull
     public UnaryOperator<String> placeholders(@NotNull Player player, @NotNull Crate crate) {
@@ -102,8 +98,8 @@ public class PityService {
 
         return text -> {
             if (text.contains(Placeholders.CRATE_PITY_LINE1) || text.contains(Placeholders.CRATE_PITY_LINE2) || text.contains(Placeholders.CRATE_PITY_LORE)) {
-                String line1 = settings.isEnabled() ? Lang.PITY_LORE_LINE1.text() : "";
-                String line2 = !settings.isEnabled() ? "" : left <= 0 ? Lang.PITY_LORE_LINE2_NEXT.text() : Lang.PITY_LORE_LINE2.text();
+                String line1 = settings.isEnabled() ? Lang.PITY_HOLOGRAM_LINE1.text() : "";
+                String line2 = settings.isEnabled() ? secondLine(left) : "";
                 text = text.replace(Placeholders.CRATE_PITY_LORE, line1.isEmpty() ? "" : line1 + "\n" + line2)
                     .replace(Placeholders.CRATE_PITY_LINE1, line1)
                     .replace(Placeholders.CRATE_PITY_LINE2, line2);

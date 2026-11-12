@@ -54,6 +54,11 @@ public class PityRollTest {
         assertEquals(1, s.keysLeft(149));
         assertEquals(0, s.keysLeft(150));
         assertEquals(0, s.keysLeft(999));
+        // "within N keys" vs "on your next key": counter 149 of Hard 150 means the next key is the guaranteed one.
+        assertFalse(PitySettings.isNextKey(s.keysLeft(0)));
+        assertFalse(PitySettings.isNextKey(s.keysLeft(148)));
+        assertTrue(PitySettings.isNextKey(s.keysLeft(149)));
+        assertTrue(PitySettings.isNextKey(s.keysLeft(150)));
         assertFalse(new PitySettings("none", 120, 150, 0.03).isEnabled());
         assertFalse(new PitySettings("", 120, 150, 0.03).isEnabled());
         assertTrue(s.isEnabled());
