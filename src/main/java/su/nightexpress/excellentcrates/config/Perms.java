@@ -39,6 +39,8 @@ public class Perms {
     public static final UniPermission COMMAND_PREVIEW_OTHERS     = new UniPermission(PREFIX_COMMAND + "preview.others");
     public static final UniPermission COMMAND_FAST               = new UniPermission(PREFIX_COMMAND + "fast", "Lets players toggle skipping opening animations.", TRUE); // CatCraft
     public static final UniPermission COMMAND_RETIRE             = new UniPermission(PREFIX_COMMAND + "retire"); // CatCraft
+    // CatCraft: admin only. Deliberately not a child of excellentcrates.command.* so staff wildcards don't include it.
+    public static final UniPermission COMMAND_HISTORY            = new UniPermission(PREFIX_COMMAND + "history", "Lets admins read a player's crate openings and key gives.", OP);
     public static final UniPermission COMMAND_RESETCOOLDOWN      = new UniPermission(PREFIX_COMMAND + "resetcooldown");
 
     public static final UniPermission BYPASS_CRATE_COOLDOWN  = new UniPermission(PREFIX_BYPASS + "crate.opencooldown");

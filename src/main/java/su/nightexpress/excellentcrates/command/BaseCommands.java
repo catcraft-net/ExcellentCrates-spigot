@@ -353,6 +353,7 @@ public class BaseCommands {
             if (!player.hasPermission(Perms.INCLUDE_KEY_GIVEALL)) return;
 
             plugin.getKeyManager().giveKey(player, key, amount);
+            this.logKey("GIVE", player.getName(), key, amount, context.getSender().getName(), key.isVirtual() ? plugin.getKeyManager().getKeysAmount(player, key) : null); // CatCraft
 
             if (!silent) {
                 Lang.COMMAND_KEY_GIVE_NOTIFY.message().send(player, replacer -> replacer
@@ -407,6 +408,7 @@ public class BaseCommands {
 
             plugin.getKeyManager().giveKey(user, key, amount);
             plugin.getUserManager().save(user);
+            this.logKey("GIVE", user.getName(), key, amount, context.getSender().getName(), key.isVirtual() ? user.countKeys(key.getId()) : null); // CatCraft
 
             Player target = user.getPlayer();
             if (target != null && !context.hasFlag(CommandFlags.SILENT)) {
@@ -440,6 +442,7 @@ public class BaseCommands {
 
             plugin.getKeyManager().setKey(user, key, amount);
             plugin.getUserManager().save(user);
+            this.logKey("SET", user.getName(), key, amount, context.getSender().getName(), key.isVirtual() ? user.countKeys(key.getId()) : null); // CatCraft
 
             Player target = user.getPlayer();
             if (target != null && !context.hasFlag(CommandFlags.SILENT)) {
@@ -473,6 +476,7 @@ public class BaseCommands {
 
             plugin.getKeyManager().takeKey(user, key, amount);
             plugin.getUserManager().save(user);
+            this.logKey("TAKE", user.getName(), key, amount, context.getSender().getName(), key.isVirtual() ? user.countKeys(key.getId()) : null); // CatCraft
 
             Player target = user.getPlayer();
             if (target != null && !context.hasFlag(CommandFlags.SILENT)) {
@@ -490,5 +494,10 @@ public class BaseCommands {
             }
         });
         return true;
+    }
+
+    // CatCraft: write every key change to keys.log for /crate history.
+    private void logKey(@NotNull String action, @NotNull String player, @NotNull CrateKey key, int amount, @NotNull String by, Integer balance) {
+        plugin.getCrateLogger().logKey(action, player, key.getId(), amount, by, balance);
     }
 }

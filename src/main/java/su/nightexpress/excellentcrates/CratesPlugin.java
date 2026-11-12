@@ -158,6 +158,7 @@ public class CratesPlugin extends NightPlugin {
         this.rootCommand = NightCommand.forPlugin(this, builder -> {
             new BaseCommands(this).load(builder);
             new su.nightexpress.excellentcrates.command.RetireCommand(this).load(builder); // CatCraft
+            new su.nightexpress.excellentcrates.command.HistoryCommand(this).load(builder); // CatCraft
         });
         if (this.tabFilter == null) { // CatCraft: once, even across /crate reload
             this.tabFilter = new su.nightexpress.excellentcrates.command.TabFilter(this);
