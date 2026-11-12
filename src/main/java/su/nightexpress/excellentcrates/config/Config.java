@@ -149,6 +149,15 @@ public class Config {
         "Sets how often (in seconds) crate holograms will update."
     );
 
+    // CatCraft pity
+    public static final ConfigValue<Boolean> PITY_SHOW_IN_HOLOGRAM = ConfigValue.create("Pity.Show_In_Hologram",
+        true,
+        "Adds two lines under the hologram of every crate that has a Pity group, resolved per viewer:",
+        "Pity.Hologram.Line1 and Line2 from the lang file (Line2_Next once the viewer's next key is guaranteed).",
+        "Crates without a Pity group are unchanged. A template that already contains %crate_pity_line1% or",
+        "%crate_pity_lore% places the lines itself and gets nothing added."
+    );
+
     public static final ConfigValue<Display.Billboard> CRATE_HOLOGRAM_BILLBOARD = ConfigValue.create("Crate.Holograms.Billboard",
         Display.Billboard.class, Display.Billboard.VERTICAL,
         "Controls if crate holograms should pivot to face player when rendered.",

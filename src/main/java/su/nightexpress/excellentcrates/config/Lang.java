@@ -212,18 +212,27 @@ public class Lang implements LangContainer {
     public static final TextLocale OTHER_LAST_OPENER_EMPTY    = LangEntry.builder("Other.LastOpener.Empty").text("-");
     public static final TextLocale OTHER_LAST_REWARD_EMPTY    = LangEntry.builder("Other.LastReward.Empty").text("-");
 
-    // CatCraft pity. Plain text that also reads fine on Bedrock; &7 text, &c numbers. %crate_pity_left% = keys until
-    // the guarantee. Line2_Next is used instead of Line2 when the next key is already guaranteed.
-    public static final TextLocale PITY_LORE_LINE1 = LangEntry.builder("Pity.Lore.Line1").text("&7Ultra Legendary guaranteed");
-    public static final TextLocale PITY_LORE_LINE2 = LangEntry.builder("Pity.Lore.Line2").text("&7within &c" + CRATE_PITY_LEFT + " &7keys");
-    public static final TextLocale PITY_LORE_LINE2_NEXT = LangEntry.builder("Pity.Lore.Line2_Next").text("&7on your next key");
+    // CatCraft pity. The two lines shown under the hologram of a pity crate, per viewer (config Pity.Show_In_Hologram),
+    // and behind %crate_pity_line1% / %crate_pity_line2%. Plain text that also reads fine on Bedrock; &7 text, &c numbers.
+    // %crate_pity_left% = keys until the guarantee. Line2_Next replaces Line2 when the viewer's next key is guaranteed.
+    // They promise "a random Ultra Legendary" on purpose: the old per-item lore read like a promise of that item.
+    public static final TextLocale PITY_HOLOGRAM_LINE1 = LangEntry.builder("Pity.Hologram.Line1").text("&7A random Ultra Legendary");
+    public static final TextLocale PITY_HOLOGRAM_LINE2 = LangEntry.builder("Pity.Hologram.Line2").text("&7guaranteed within &c" + CRATE_PITY_LEFT + " &7keys");
+    public static final TextLocale PITY_HOLOGRAM_LINE2_NEXT = LangEntry.builder("Pity.Hologram.Line2_Next").text("&7guaranteed on your next key");
 
     public static final TextLocale COMMAND_PITY_DESC     = LangEntry.builder("Command.Pity.Desc").text("Show pity counters (keys since the last Ultra Legendary).");
     public static final TextLocale COMMAND_PITY_SET_DESC = LangEntry.builder("Command.Pity.Set.Desc").text("Set a player's pity counter for a group.");
     public static final MessageLocale COMMAND_PITY_SHOW_HEADER = LangEntry.builder("Command.Pity.Show.Header").chatMessage(
         GRAY.wrap("Pity counters of " + WHITE.wrap(PLAYER_NAME) + " (keys since the last Ultra Legendary)"));
     public static final MessageLocale COMMAND_PITY_SHOW_ENTRY = LangEntry.builder("Command.Pity.Show.Entry").chatMessage(
-        GRAY.wrap(" · " + WHITE.wrap(GENERIC_NAME) + " · " + RED.wrap(GENERIC_CURRENT) + " keys, guaranteed in " + RED.wrap(GENERIC_AMOUNT) + " more (cap " + RED.wrap(GENERIC_MAX) + ")"));
+        GRAY.wrap(" · " + WHITE.wrap(GENERIC_NAME) + " · " + RED.wrap(GENERIC_CURRENT) + " keys, " + GENERIC_AMOUNT));
+    // %amount% of the entry above: one of these, by the same rule as the hologram lines.
+    public static final TextLocale COMMAND_PITY_SHOW_LEFT = LangEntry.builder("Command.Pity.Show.Left").text(
+        "a random Ultra Legendary guaranteed within " + RED.wrap(GENERIC_AMOUNT) + " keys (cap " + RED.wrap(GENERIC_MAX) + ")");
+    public static final TextLocale COMMAND_PITY_SHOW_NEXT = LangEntry.builder("Command.Pity.Show.Next").text(
+        "a random Ultra Legendary guaranteed on your next key (cap " + RED.wrap(GENERIC_MAX) + ")");
+    public static final TextLocale COMMAND_PITY_SHOW_UNUSED = LangEntry.builder("Command.Pity.Show.Unused").text(
+        "no loaded crate uses this group");
     public static final MessageLocale COMMAND_PITY_SHOW_EMPTY = LangEntry.builder("Command.Pity.Show.Empty").chatMessage(
         GRAY.wrap(WHITE.wrap(PLAYER_NAME) + " has no pity counters yet."));
     public static final MessageLocale COMMAND_PITY_SET_DONE = LangEntry.builder("Command.Pity.Set.Done").chatMessage(
