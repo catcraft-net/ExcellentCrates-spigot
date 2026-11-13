@@ -218,7 +218,7 @@ public class Lang implements LangContainer {
     // %crate_pity_left% = keys until the guarantee. Line2_Next replaces Line2 when the viewer's next key is guaranteed.
     // They promise "a random Ultra Legendary" on purpose: the old per-item lore read like a promise of that item.
     public static final TextLocale PITY_HOLOGRAM_LINE1 = LangEntry.builder("Pity.Hologram.Line1").text("<gray>A random <gradient:#FCC201:#FDD65D>Ultra Legendary</gradient>");
-    public static final TextLocale PITY_HOLOGRAM_LINE2 = LangEntry.builder("Pity.Hologram.Line2").text("<gray>guaranteed within <green>" + CRATE_PITY_LEFT + "</green> keys");
+    public static final TextLocale PITY_HOLOGRAM_LINE2 = LangEntry.builder("Pity.Hologram.Line2").text("<gray>guaranteed in <green>" + CRATE_PITY_LEFT + "</green> keys or less");
     public static final TextLocale PITY_HOLOGRAM_LINE2_NEXT = LangEntry.builder("Pity.Hologram.Line2_Next").text("<gray>guaranteed on your next key");
 
     public static final TextLocale COMMAND_PITY_DESC     = LangEntry.builder("Command.Pity.Desc").text("Show pity counters (keys since the last Ultra Legendary).");
