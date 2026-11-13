@@ -34,6 +34,7 @@ public class DataHandler extends AbstractUserDataManager<CratesPlugin, CrateUser
     public static final Column COLUMN_KEYS         = Column.of("keys", ColumnType.STRING);
     public static final Column COLUMN_KEYS_ON_HOLD = Column.of("keysOnHold", ColumnType.STRING);
     public static final Column COLUMN_CRATE_DATA   = Column.of("crateData", ColumnType.STRING);
+    public static final Column COLUMN_PITY         = Column.of("pity", ColumnType.STRING); // CatCraft
 
     public static final Column COLUMN_CRATE_ID    = Column.of("crateId", ColumnType.STRING);
     public static final Column COLUMN_REWARD_ID   = Column.of("rewardId", ColumnType.STRING);
@@ -127,8 +128,13 @@ public class DataHandler extends AbstractUserDataManager<CratesPlugin, CrateUser
                 Map<String, Integer> keys = this.gson.fromJson(resultSet.getString(COLUMN_KEYS.getName()), new TypeToken<Map<String, Integer>>() {}.getType());
                 Map<String, Integer> keysOnHold = this.gson.fromJson(resultSet.getString(COLUMN_KEYS_ON_HOLD.getName()), new TypeToken<Map<String, Integer>>() {}.getType());
                 Map<String, UserCrateData> crateDataMap = this.gson.fromJson(resultSet.getString(COLUMN_CRATE_DATA.getName()), new TypeToken<Map<String, UserCrateData>>(){}.getType());
+                // CatCraft: pity counters (column added by catcraft.13; rows from before have "{}").
+                String pityJson = resultSet.getString(COLUMN_PITY.getName());
+                Map<String, Integer> pity = pityJson == null || pityJson.isBlank() ? new HashMap<>()
+                    : this.gson.fromJson(pityJson, new TypeToken<Map<String, Integer>>() {}.getType());
+                if (pity == null) pity = new HashMap<>();
 
-                return new CrateUser(uuid, name, dateCreated, lastOnline, keys, keysOnHold, crateDataMap);
+                return new CrateUser(uuid, name, dateCreated, lastOnline, keys, keysOnHold, crateDataMap, pity);
             }
             catch (SQLException exception) {
                 exception.printStackTrace();
@@ -154,6 +160,8 @@ public class DataHandler extends AbstractUserDataManager<CratesPlugin, CrateUser
             user.getKeysMap().putAll(fresh.getKeysMap());
             user.getCrateDataMap().clear();
             user.getCrateDataMap().putAll(fresh.getCrateDataMap());
+            user.getPityMap().clear();
+            user.getPityMap().putAll(fresh.getPityMap());
         }
 
         this.plugin.getDataManager().handleSynchronization();
@@ -162,6 +170,11 @@ public class DataHandler extends AbstractUserDataManager<CratesPlugin, CrateUser
     @Override
     protected void onInitialize() {
         super.onInitialize();
+
+        // CatCraft: pity counters live in a new users-table column; add it to databases made before catcraft.13.
+        if (!this.hasColumn(this.tableUsers, COLUMN_PITY)) {
+            this.addColumn(this.tableUsers, COLUMN_PITY, "{}");
+        }
 
         this.createTable(this.tableCrateData, Lists.newList(
             COLUMN_CRATE_ID,
@@ -184,6 +197,7 @@ public class DataHandler extends AbstractUserDataManager<CratesPlugin, CrateUser
         query.setValue(COLUMN_CRATE_DATA, user -> this.gson.toJson(user.getCrateDataMap()));
         query.setValue(COLUMN_KEYS, user -> this.gson.toJson(user.getKeysMap()));
         query.setValue(COLUMN_KEYS_ON_HOLD, user -> this.gson.toJson(user.getKeysOnHold()));
+        query.setValue(COLUMN_PITY, user -> this.gson.toJson(user.getPityMap())); // CatCraft
     }
 
     @Override
@@ -191,6 +205,7 @@ public class DataHandler extends AbstractUserDataManager<CratesPlugin, CrateUser
         query.column(COLUMN_CRATE_DATA);
         query.column(COLUMN_KEYS);
         query.column(COLUMN_KEYS_ON_HOLD);
+        query.column(COLUMN_PITY); // CatCraft
     }
 
     @Override
@@ -198,6 +213,7 @@ public class DataHandler extends AbstractUserDataManager<CratesPlugin, CrateUser
         columns.add(COLUMN_CRATE_DATA);
         columns.add(COLUMN_KEYS);
         columns.add(COLUMN_KEYS_ON_HOLD);
+        columns.add(COLUMN_PITY); // CatCraft
     }
 
     @NotNull

@@ -97,6 +97,7 @@ public class Crate implements ConfigBacked {
     private UniParticle effectParticle;
 
     private List<String> postOpenCommands;
+    private su.nightexpress.excellentcrates.crate.pity.PitySettings pity; // CatCraft
 
     private boolean dirty;
 
@@ -110,6 +111,7 @@ public class Crate implements ConfigBacked {
         this.blockPositions = new HashSet<>();
         this.milestones = new HashSet<>();
         this.description = new ArrayList<>();
+        this.pity = su.nightexpress.excellentcrates.crate.pity.PitySettings.OFF; // CatCraft
     }
 
     public void load() throws IllegalStateException {
@@ -243,6 +245,7 @@ public class Crate implements ConfigBacked {
         this.setEffectEnabled(config.getBoolean("Block.Effect.Enabled", !this.effectType.equalsIgnoreCase(EffectId.NONE)));
 
         this.setPostOpenCommands(config.getStringList("Post-Open.Commands"));
+        this.setPity(su.nightexpress.excellentcrates.crate.pity.PitySettings.read(config, "Pity")); // CatCraft
 
         for (String sId : config.getSection("Rewards.List")) {
             Reward reward = RewardFactory.read(this.plugin, this, sId, config, "Rewards.List." + sId);
@@ -306,6 +309,7 @@ public class Crate implements ConfigBacked {
         this.effectParticle.write(config, "Block.Effect.Particle");
 
         config.set("Post-Open.Commands", this.postOpenCommands);
+        if (this.pity.isEnabled() || config.contains("Pity")) this.pity.write(config, "Pity"); // CatCraft
     }
 
     private void writeRewards(@NotNull FileConfig config) {
@@ -467,7 +471,18 @@ public class Crate implements ConfigBacked {
     @NotNull
     public List<String> getHologramText() {
         HologramTemplate template = Config.getHologramTemplate(this.hologramTemplateId);
-        return template == null ? Collections.emptyList() : template.getText();
+        if (template == null) return Collections.emptyList();
+
+        List<String> text = template.getText();
+        // CatCraft pity: a crate with a pity group gets the two pity lines under the template's lines. They stay as
+        // %crate_pity_line1% / %crate_pity_line2% here; HologramManager resolves them for each viewer (own counter).
+        if (text.isEmpty() || !this.pity.isEnabled() || !Config.PITY_SHOW_IN_HOLOGRAM.get()) return text;
+        if (text.stream().anyMatch(line -> line.contains(Placeholders.CRATE_PITY_LINE1) || line.contains(Placeholders.CRATE_PITY_LORE))) return text;
+
+        List<String> withPity = new ArrayList<>(text);
+        withPity.add(Placeholders.CRATE_PITY_LINE1);
+        withPity.add(Placeholders.CRATE_PITY_LINE2);
+        return withPity;
     }
 
     public boolean hasRewards(@NotNull Player player) {
@@ -503,14 +518,12 @@ public class Crate implements ConfigBacked {
 
         // If no rarity is specified, we have to select a random one and filter rewards by selected rarity.
         // Otherwise reward list is already obtained with specified rarity.
+        // CatCraft: same rarity-then-weight selection as before, through RewardRoll (nightcore's
+        // Rnd.getByWeight algorithm with the plugin's random source) so the replay harness can run it too.
         if (rarity == null) {
-            Map<Rarity, Double> rarities = new HashMap<>();
-            rewards.stream().map(Reward::getRarity).forEach(rewardRarity -> {
-                rarities.putIfAbsent(rewardRarity, rewardRarity.getWeight());
-            });
-
-            Rarity rarityRoll = Rnd.getByWeight(rarities);
-            rewards.removeIf(reward -> reward.getRarity() != rarityRoll);
+            return su.nightexpress.excellentcrates.crate.reward.RewardRoll.rarityThenWeight(rewards,
+                Reward::getRarity, Rarity::getWeight, Reward::getWeight,
+                su.nightexpress.excellentcrates.crate.reward.RewardRoll.random());
         }
 
         return this.rollReward(rewards);
@@ -518,11 +531,34 @@ public class Crate implements ConfigBacked {
 
     @NotNull
     private Reward rollReward(@NotNull Collection<Reward> allRewards) {
-        Map<Reward, Double> rewards = new HashMap<>();
-        allRewards.forEach(reward -> {
-            rewards.put(reward, reward.getWeight());
-        });
-        return Rnd.getByWeight(rewards);
+        return su.nightexpress.excellentcrates.crate.reward.RewardRoll.weighted(allRewards, Reward::getWeight,
+            su.nightexpress.excellentcrates.crate.reward.RewardRoll.random());
+    }
+
+    /**
+     * CatCraft: the reward a player actually wins for one key. Runs the pity check first (guaranteed Ultra
+     * Legendary at the hard cap, extra chance past the soft cap) and falls back to {@code normalRoll},
+     * the crate's usual weighted roll, which is unchanged. Updates the player's pity counter.
+     * Every opening decides its prize through this before the animation starts.
+     */
+    @NotNull
+    public Reward rollPrize(@NotNull Player player, @NotNull java.util.function.Supplier<Reward> normalRoll) {
+        return this.plugin.getPityService().roll(player, this, normalRoll);
+    }
+
+    /** CatCraft: the crate's Ultra Legendary rewards (see {@link Reward#isUltraLegendary()}). */
+    @NotNull
+    public List<Reward> getUltraLegendaries() {
+        return this.getRewards().stream().filter(Reward::isUltraLegendary).toList();
+    }
+
+    @NotNull
+    public su.nightexpress.excellentcrates.crate.pity.PitySettings getPity() {
+        return this.pity;
+    }
+
+    public void setPity(@NotNull su.nightexpress.excellentcrates.crate.pity.PitySettings pity) {
+        this.pity = pity;
     }
 
     public void addBlockPosition(@NotNull Location location) {

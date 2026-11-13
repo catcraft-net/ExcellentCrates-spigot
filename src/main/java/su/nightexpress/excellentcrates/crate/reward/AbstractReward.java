@@ -2,6 +2,7 @@ package su.nightexpress.excellentcrates.crate.reward;
 
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import su.nightexpress.excellentcrates.CratesPlugin;
 import su.nightexpress.excellentcrates.Placeholders;
 import su.nightexpress.excellentcrates.api.crate.Reward;
@@ -35,6 +36,8 @@ public abstract class AbstractReward implements Reward {
     protected LimitValues limits;
     protected Set<String> ignoredPermissions;
     protected Set<String> requiredPermissions;
+    protected Boolean     pityReward;      // CatCraft: Pity_Reward override (null = decide from the description)
+    private   Boolean     ultraLegendary;  // CatCraft: cached answer of isUltraLegendary()
 
     public AbstractReward(@NotNull CratesPlugin plugin, @NotNull Crate crate, @NotNull String id, @NotNull Rarity rarity) {
         this.plugin = plugin;
@@ -74,6 +77,7 @@ public abstract class AbstractReward implements Reward {
         this.setLimits(LimitValues.read(config, path + ".Limits"));
         this.setIgnoredPermissions(config.getStringSet(path + ".Ignored_For_Permissions"));
         this.setRequiredPermissions(config.getStringSet(path + ".Required_Permissions"));
+        this.pityReward = config.contains(path + ".Pity_Reward") ? config.getBoolean(path + ".Pity_Reward") : null; // CatCraft
 
         this.loadAdditional(config, path);
     }
@@ -88,6 +92,7 @@ public abstract class AbstractReward implements Reward {
         config.set(path + ".Limits", this.limits);
         config.set(path + ".Ignored_For_Permissions", this.ignoredPermissions);
         config.set(path + ".Required_Permissions", this.requiredPermissions);
+        if (this.pityReward != null) config.set(path + ".Pity_Reward", this.pityReward); // CatCraft
         this.writeAdditional(config, path);
     }
 
@@ -256,6 +261,32 @@ public abstract class AbstractReward implements Reward {
     @Override
     public void setBroadcast(boolean broadcast) {
         this.broadcast = broadcast;
+    }
+
+    /**
+     * CatCraft: an Ultra Legendary is a reward whose description (lore) contains "ULTRA-LEGENDARY" or
+     * "ULTRA LEGENDARY" with colours and tags stripped, unless the crate file sets {@code Pity_Reward}.
+     * Computed once per loaded reward (ItemRewards build their preview item to read the lore).
+     */
+    @Override
+    public boolean isUltraLegendary() {
+        if (this.pityReward != null) return this.pityReward;
+
+        Boolean cached = this.ultraLegendary;
+        if (cached == null) {
+            cached = su.nightexpress.excellentcrates.crate.pity.PityRoll.isUltraDescription(this.getDescription());
+            this.ultraLegendary = cached;
+        }
+        return cached;
+    }
+
+    @Nullable
+    public Boolean getPityReward() {
+        return this.pityReward;
+    }
+
+    public void setPityReward(@Nullable Boolean pityReward) {
+        this.pityReward = pityReward;
     }
 
     @NotNull

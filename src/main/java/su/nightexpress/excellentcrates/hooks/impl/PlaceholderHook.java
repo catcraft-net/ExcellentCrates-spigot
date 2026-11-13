@@ -126,6 +126,10 @@ public class PlaceholderHook {
                 return reward.getName();
             });
 
+            // CatCraft pity: %excellentcrates_pity_count_<crate>% / %excellentcrates_pity_left_<crate>%
+            this.userPlaceholders.put("pity_count", (player, crate) -> player == null ? null : String.valueOf(plugin.getPityService().getCount(player, crate)));
+            this.userPlaceholders.put("pity_left", (player, crate) -> player == null ? null : String.valueOf(plugin.getPityService().getKeysLeft(player, crate)));
+
             this.userPlaceholders.put("latest_opener", (player, crate) -> crate.getLastOpener().map(CachedProfile::query).map(NightProfile::getName).orElse(Lang.OTHER_LAST_OPENER_EMPTY.text()));
             this.userPlaceholders.put("latest_rolled_reward", (player, crate) -> crate.getLastRewardName());
         }

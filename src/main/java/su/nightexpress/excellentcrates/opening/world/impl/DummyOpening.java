@@ -50,7 +50,7 @@ public class DummyOpening extends AbstractOpening {
     private void roll() {
         this.setRefundable(false);
 
-        this.addReward(this.crate.rollReward(this.player));
+        this.addReward(this.crate.rollPrize(this.player, () -> this.crate.rollReward(this.player))); // CatCraft pity
 
         this.rolled = true;
     }

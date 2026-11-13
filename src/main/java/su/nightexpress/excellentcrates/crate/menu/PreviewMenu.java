@@ -68,6 +68,16 @@ public class PreviewMenu extends LinkedMenu<CratesPlugin, CrateSource> implement
 
     }
 
+    /** CatCraft: the preview's own items (from the preview file) can use %crate_pity_*% and crate placeholders. */
+    @Override
+    protected void onItemPrepare(@NotNull MenuViewer viewer, @NotNull su.nightexpress.nightcore.ui.menu.item.MenuItem menuItem, @NotNull NightItem item) {
+        Crate crate = this.getLink(viewer).getCrate();
+        Player player = viewer.getPlayer();
+        item.replacement(replacer -> replacer
+            .replace(plugin.getPityService().placeholders(player, crate))
+            .replace(crate.replacePlaceholders()));
+    }
+
     @Override
     @NotNull
     public MenuFiller<Reward> createFiller(@NotNull MenuViewer viewer) {
@@ -94,12 +104,15 @@ public class PreviewMenu extends LinkedMenu<CratesPlugin, CrateSource> implement
                 restrictions.addAll(this.noPermissionLore);
             }
 
+            // CatCraft pity: the reward items carry no pity text on purpose (it read as a promise of that item);
+            // the promise of "a random Ultra Legendary" is in the crate hologram instead, per viewer.
             return NightItem.fromItemStack(reward.getPreviewItem())
                 .ignoreNameAndLore()
                 .setDisplayName(this.rewardName)
                 .setLore(this.rewardLore)
                 .replacement(replacer -> {
                         replacer
+                            .replace(plugin.getPityService().placeholders(player, crate))
                             .replace(GENERIC_LIMITS, limits)
                             .replace(NO_PERMISSION, restrictions)
                             .replace("%win_limit_amount%", limits)
