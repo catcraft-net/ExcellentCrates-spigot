@@ -185,7 +185,7 @@ public class HologramManager extends AbstractManager<CratesPlugin> {
                 boolean needSpawn = !group.isViewer(player);
 
                 // CatCraft: pity placeholders are per viewer, so they're replaced here, before PlaceholderAPI.
-                List<String> hologramText = Replacer.create().replace(this.plugin.getPityService().placeholders(player, crate)).replacePlaceholderAPI(player).apply(text);
+                List<String> hologramText = Replacer.create().replacePlaceholderAPI(player).apply(this.plugin.getPityService().hologramLines(player, crate, text));
                 List<FakeEntity> holograms = group.getEntities();
                 for (int index = 0; index < holograms.size(); index++) {
                     // Fix for fake entity's text not being updated/replaced when text size is less than holograms amount, so force it to empty string.
