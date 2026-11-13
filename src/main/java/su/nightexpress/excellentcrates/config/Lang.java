@@ -213,12 +213,13 @@ public class Lang implements LangContainer {
     public static final TextLocale OTHER_LAST_REWARD_EMPTY    = LangEntry.builder("Other.LastReward.Empty").text("-");
 
     // CatCraft pity. The two lines shown under the hologram of a pity crate, per viewer (config Pity.Show_In_Hologram),
-    // and behind %crate_pity_line1% / %crate_pity_line2%. Plain text that also reads fine on Bedrock; &7 text, &c numbers.
+    // and behind %crate_pity_line1% / %crate_pity_line2%. Grey text, the keys-left number lime (red read as an error),
+    // "Ultra Legendary" in the gold gradient of the UL lore lines so it stands out.
     // %crate_pity_left% = keys until the guarantee. Line2_Next replaces Line2 when the viewer's next key is guaranteed.
     // They promise "a random Ultra Legendary" on purpose: the old per-item lore read like a promise of that item.
-    public static final TextLocale PITY_HOLOGRAM_LINE1 = LangEntry.builder("Pity.Hologram.Line1").text("&7A random Ultra Legendary");
-    public static final TextLocale PITY_HOLOGRAM_LINE2 = LangEntry.builder("Pity.Hologram.Line2").text("&7guaranteed within &c" + CRATE_PITY_LEFT + " &7keys");
-    public static final TextLocale PITY_HOLOGRAM_LINE2_NEXT = LangEntry.builder("Pity.Hologram.Line2_Next").text("&7guaranteed on your next key");
+    public static final TextLocale PITY_HOLOGRAM_LINE1 = LangEntry.builder("Pity.Hologram.Line1").text("<gray>A random <gradient:#FCC201:#FDD65D>Ultra Legendary</gradient>");
+    public static final TextLocale PITY_HOLOGRAM_LINE2 = LangEntry.builder("Pity.Hologram.Line2").text("<gray>guaranteed within <green>" + CRATE_PITY_LEFT + "</green> keys");
+    public static final TextLocale PITY_HOLOGRAM_LINE2_NEXT = LangEntry.builder("Pity.Hologram.Line2_Next").text("<gray>guaranteed on your next key");
 
     public static final TextLocale COMMAND_PITY_DESC     = LangEntry.builder("Command.Pity.Desc").text("Show pity counters (keys since the last Ultra Legendary).");
     public static final TextLocale COMMAND_PITY_SET_DESC = LangEntry.builder("Command.Pity.Set.Desc").text("Set a player's pity counter for a group.");
