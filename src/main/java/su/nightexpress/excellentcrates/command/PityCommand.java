@@ -57,7 +57,95 @@ public class PityCommand {
                 )
                 .executes(this::set)
             )
+            .branch(Commands.literal("backfill")
+                .description("Seeds every pity counter from this server's openings.log (keys since the last Ultra Legendary).")
+                .permission(Perms.COMMAND_PITY)
+                .executes(this::backfill)
+            )
         );
+    }
+
+    /**
+     * One-off seeding after pity goes live: replays this server's own openings.log (the full history) and sets each
+     * player's counter per group to the keys they opened on that group's crates since their last Ultra Legendary,
+     * capped at Hard - 1 so a player already past the cap gets the guarantee on their next key. Crates without a
+     * pity group and rewards no longer in a crate file are skipped (an unknown reward counts as a dry key).
+     * Overwrites every counter it computes, so run it once, right after the restart that enabled pity.
+     */
+    private boolean backfill(@NotNull CommandContext context, @NotNull ParsedArguments arguments) {
+        CommandSender sender = context.getSender();
+        java.io.File log = new java.io.File(this.plugin.getDataFolder(), su.nightexpress.excellentcrates.config.Config.FILE_LOGS);
+        if (!log.isFile()) {
+            sender.sendMessage("No " + log.getName() + " to read.");
+            return true;
+        }
+        java.util.Map<String, su.nightexpress.excellentcrates.crate.impl.Crate> crates = new java.util.HashMap<>();
+        this.plugin.getCrateManager().getCrates().forEach(crate -> {
+            if (crate.getPity().isEnabled()) crates.put(crate.getId().toLowerCase(), crate);
+        });
+        if (crates.isEmpty()) {
+            sender.sendMessage("No crate has a pity group.");
+            return true;
+        }
+        sender.sendMessage("Reading " + log.getName() + " for " + crates.size() + " pity crates...");
+
+        this.plugin.runTaskAsync(() -> {
+            java.util.regex.Pattern line = java.util.regex.Pattern.compile("^\\[[^\\]]+] (\\S+) won .*\\(ID: ([^,)]+), Weight: [^)]*\\) from .* \\(ID: ([^)]+)\\)\\s*$");
+            // player -> group -> keys since the last UL
+            java.util.Map<String, java.util.Map<String, Integer>> counters = new java.util.HashMap<>();
+            java.util.Map<String, Integer> hardCaps = new java.util.HashMap<>();
+            long keys = 0;
+            try (java.io.BufferedReader reader = java.nio.file.Files.newBufferedReader(log.toPath(), java.nio.charset.StandardCharsets.UTF_8)) {
+                String text;
+                while ((text = reader.readLine()) != null) {
+                    java.util.regex.Matcher m = line.matcher(text);
+                    if (!m.matches()) continue;
+                    su.nightexpress.excellentcrates.crate.impl.Crate crate = crates.get(m.group(3).toLowerCase());
+                    if (crate == null) continue;
+                    String group = crate.getPity().group();
+                    hardCaps.merge(group, crate.getPity().hard(), Math::max);
+                    su.nightexpress.excellentcrates.api.crate.Reward reward = crate.getReward(m.group(2));
+                    boolean ultra = reward != null && reward.isUltraLegendary();
+                    java.util.Map<String, Integer> byGroup = counters.computeIfAbsent(m.group(1), k -> new java.util.HashMap<>());
+                    byGroup.merge(group, ultra ? 0 : 1, (old, add) -> ultra ? 0 : old + add);
+                    keys++;
+                }
+            }
+            catch (java.io.IOException exception) {
+                this.plugin.runTask(() -> sender.sendMessage("Could not read " + log.getName() + ": " + exception.getMessage()));
+                return;
+            }
+            final long total = keys;
+            java.util.List<java.util.Map.Entry<String, java.util.Map<String, Integer>>> todo = counters.entrySet().stream()
+                .filter(entry -> entry.getValue().values().stream().anyMatch(count -> count > 0)).toList();
+            this.plugin.runTask(() -> {
+                sender.sendMessage("Read " + total + " pity-crate keys for " + counters.size() + " players; setting counters for " + todo.size() + " of them (the rest are at 0)...");
+                java.util.concurrent.atomic.AtomicInteger done = new java.util.concurrent.atomic.AtomicInteger();
+                java.util.concurrent.atomic.AtomicInteger missing = new java.util.concurrent.atomic.AtomicInteger();
+                java.util.concurrent.atomic.AtomicInteger capped = new java.util.concurrent.atomic.AtomicInteger();
+                for (java.util.Map.Entry<String, java.util.Map<String, Integer>> entry : todo) {
+                    this.plugin.getUserManager().manageUser(entry.getKey(), user -> {
+                        if (user == null) {
+                            missing.incrementAndGet();
+                        }
+                        else {
+                            entry.getValue().forEach((group, count) -> {
+                                int cap = Math.max(0, hardCaps.getOrDefault(group, 150) - 1);
+                                if (count > cap) capped.incrementAndGet();
+                                user.setPity(group, Math.min(count, cap));
+                            });
+                            this.plugin.getUserManager().save(user);
+                        }
+                        if (done.incrementAndGet() == todo.size()) {
+                            sender.sendMessage("Pity backfill done: " + (todo.size() - missing.get()) + " players set, " + missing.get()
+                                + " names unknown to the plugin, " + capped.get() + " counters capped to Hard - 1 (next key guaranteed).");
+                        }
+                    });
+                }
+                if (todo.isEmpty()) sender.sendMessage("Pity backfill done: nothing to set.");
+            });
+        });
+        return true;
     }
 
     private boolean show(@NotNull CommandContext context, @NotNull ParsedArguments arguments) {
