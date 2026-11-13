@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import su.nightexpress.excellentcrates.CratesPlugin;
 import su.nightexpress.excellentcrates.Placeholders;
 import su.nightexpress.excellentcrates.api.crate.Reward;
+import su.nightexpress.excellentcrates.config.Config;
 import su.nightexpress.excellentcrates.config.Lang;
 import su.nightexpress.excellentcrates.crate.impl.Crate;
 import su.nightexpress.excellentcrates.crate.reward.RewardRoll;
@@ -84,6 +85,33 @@ public class PityService {
      * {@code %crate_pity_line2%} are the lang file's hologram lines resolved for the viewer; {@code %crate_pity_lore%}
      * is both joined with a newline.
      */
+    /** Whether the viewer is close enough to their guarantee for the hologram lines (config Pity.Hologram_Show_Within). */
+    public static boolean showsHologramLines(int keysLeft) {
+        int within = Config.PITY_HOLOGRAM_SHOW_WITHIN.get();
+        return within <= 0 || keysLeft <= within;
+    }
+
+    /**
+     * The crate's hologram lines for one viewer, bottom line first (the order {@code HologramManager} sends them in).
+     * Both {@code %crate_pity_*%} lines are dropped while the viewer is further than Pity.Hologram_Show_Within keys
+     * from the guarantee, and the list is padded with empty lines at the top so the remaining lines keep sitting
+     * on the crate instead of floating where the pity lines were.
+     */
+    @NotNull
+    public List<String> hologramLines(@NotNull Player player, @NotNull Crate crate, @NotNull List<String> bottomFirst) {
+        PitySettings settings = crate.getPity();
+        if (settings.isEnabled() && !showsHologramLines(this.getKeysLeft(player, crate))) {
+            List<String> kept = new ArrayList<>(bottomFirst.size());
+            for (String line : bottomFirst) {
+                if (line.contains(Placeholders.CRATE_PITY_LINE1) || line.contains(Placeholders.CRATE_PITY_LINE2) || line.contains(Placeholders.CRATE_PITY_LORE)) continue;
+                kept.add(line);
+            }
+            while (kept.size() < bottomFirst.size()) kept.add("");
+            bottomFirst = kept;
+        }
+        return Replacer.create().replace(this.placeholders(player, crate)).apply(bottomFirst);
+    }
+
     @NotNull
     public UnaryOperator<String> placeholders(@NotNull Player player, @NotNull Crate crate) {
         PitySettings settings = crate.getPity();
