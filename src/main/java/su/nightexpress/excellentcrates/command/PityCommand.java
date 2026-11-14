@@ -70,7 +70,7 @@ public class PityCommand {
      * player's counter per group to the keys they opened on that group's crates since their last Ultra Legendary,
      * capped at Hard - 1 so a player already past the cap gets the guarantee on their next key. Crates without a
      * pity group and rewards no longer in a crate file are skipped (an unknown reward counts as a dry key).
-     * Overwrites every counter it computes, so run it once, right after the restart that enabled pity.
+     * Authoritative: counters of users with no dry keys on today's pity crates are reset to 0, so it can be re-run.
      */
     private boolean backfill(@NotNull CommandContext context, @NotNull ParsedArguments arguments) {
         CommandSender sender = context.getSender();
@@ -116,33 +116,58 @@ public class PityCommand {
                 return;
             }
             final long total = keys;
-            java.util.List<java.util.Map.Entry<String, java.util.Map<String, Integer>>> todo = counters.entrySet().stream()
-                .filter(entry -> entry.getValue().values().stream().anyMatch(count -> count > 0)).toList();
+            // Every user in the database whose counter for a pity group differs from the computed value gets set:
+            // players with no (dry) keys on today's pity crates go back to 0, so a backfill is authoritative and
+            // re-running it (or running it after crates lose their Pity block) never leaves stale counters behind.
+            java.util.Set<String> groups = new java.util.HashSet<>(hardCaps.keySet());
+            this.plugin.getCrateManager().getCrates().forEach(crate -> { if (crate.getPity().isEnabled()) groups.add(crate.getPity().group()); });
+            java.util.Map<String, java.util.Map<String, Integer>> byLower = new java.util.HashMap<>();
+            counters.forEach((name, map) -> byLower.put(name.toLowerCase(java.util.Locale.ROOT), map));
+            java.util.List<String> todo = new java.util.ArrayList<>();
+            java.util.Set<String> seen = new java.util.HashSet<>();
+            for (su.nightexpress.excellentcrates.user.CrateUser user : this.plugin.getDataHandler().getUsers()) {
+                String lower = user.getName().toLowerCase(java.util.Locale.ROOT);
+                seen.add(lower);
+                java.util.Map<String, Integer> want = byLower.getOrDefault(lower, java.util.Collections.emptyMap());
+                boolean differs = false;
+                for (String group : groups) {
+                    int cap = Math.max(0, hardCaps.getOrDefault(group, 150) - 1);
+                    if (user.getPity(group) != Math.min(want.getOrDefault(group, 0), cap)) { differs = true; break; }
+                }
+                if (differs) todo.add(user.getName());
+            }
+            final int unknownNames = (int) byLower.keySet().stream().filter(name -> !seen.contains(name)).count();
             this.plugin.runTask(() -> {
-                sender.sendMessage("Read " + total + " pity-crate keys for " + counters.size() + " players; setting counters for " + todo.size() + " of them (the rest are at 0)...");
+                sender.sendMessage("Read " + total + " pity-crate keys for " + counters.size() + " players; " + todo.size() + " stored counters differ and will be set (" + unknownNames + " logged names have no user record and are skipped)...");
+                if (todo.isEmpty()) { sender.sendMessage("Pity backfill done: nothing to change."); return; }
                 java.util.concurrent.atomic.AtomicInteger done = new java.util.concurrent.atomic.AtomicInteger();
                 java.util.concurrent.atomic.AtomicInteger missing = new java.util.concurrent.atomic.AtomicInteger();
                 java.util.concurrent.atomic.AtomicInteger capped = new java.util.concurrent.atomic.AtomicInteger();
-                for (java.util.Map.Entry<String, java.util.Map<String, Integer>> entry : todo) {
-                    this.plugin.getUserManager().manageUser(entry.getKey(), user -> {
+                java.util.concurrent.atomic.AtomicInteger zeroed = new java.util.concurrent.atomic.AtomicInteger();
+                for (String name : todo) {
+                    this.plugin.getUserManager().manageUser(name, user -> {
                         if (user == null) {
                             missing.incrementAndGet();
                         }
                         else {
-                            entry.getValue().forEach((group, count) -> {
+                            java.util.Map<String, Integer> want = byLower.getOrDefault(name.toLowerCase(java.util.Locale.ROOT), java.util.Collections.emptyMap());
+                            boolean allZero = true;
+                            for (String group : groups) {
                                 int cap = Math.max(0, hardCaps.getOrDefault(group, 150) - 1);
+                                int count = want.getOrDefault(group, 0);
                                 if (count > cap) capped.incrementAndGet();
+                                if (count > 0) allZero = false;
                                 user.setPity(group, Math.min(count, cap));
-                            });
+                            }
+                            if (allZero) zeroed.incrementAndGet();
                             this.plugin.getUserManager().save(user);
                         }
                         if (done.incrementAndGet() == todo.size()) {
-                            sender.sendMessage("Pity backfill done: " + (todo.size() - missing.get()) + " players set, " + missing.get()
-                                + " names unknown to the plugin, " + capped.get() + " counters capped to Hard - 1 (next key guaranteed).");
+                            sender.sendMessage("Pity backfill done: " + (todo.size() - missing.get()) + " players set (" + zeroed.get() + " of them back to 0), "
+                                + missing.get() + " could not be loaded, " + capped.get() + " counters capped to Hard - 1 (next key guaranteed).");
                         }
                     });
                 }
-                if (todo.isEmpty()) sender.sendMessage("Pity backfill done: nothing to set.");
             });
         });
         return true;
